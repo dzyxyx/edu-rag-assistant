@@ -11,7 +11,7 @@ from app.integrations.hh.schemas import HHEmployer, HHVacancy
 logger = logging.getLogger(__name__)
 
 HH_API = settings.HH_API_URL
-DEFAULT_AREA = 3
+DEFAULT_AREA = settings.HH_AREA_ID
 HEADERS = {
     "User-Agent": "edu-rag-assistant/1.0 (aleksandr.klim4enko@yandex.ru)",
 }

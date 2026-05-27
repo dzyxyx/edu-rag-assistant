@@ -6,7 +6,11 @@ celery_app = Celery(
     "edu_rag",
     broker=settings.CELERY_BROKER_URL,
     backend=settings.CELERY_RESULT_BACKEND,
-    include=["app.workers.tasks.hh_ingest"],
+    include=[
+        "app.workers.tasks.hh_ingest",
+        "app.workers.tasks.rag_ingest",
+        "app.workers.tasks.outreach",
+    ],
 )
 
 celery_app.conf.update(
@@ -16,15 +20,22 @@ celery_app.conf.update(
     timezone="Europe/Moscow",
     enable_utc=True,
     broker_connection_retry_on_startup=True,
-    # Windows: prefork не поддерживается, используй --pool=solo при запуске
-    # celery -A app.workers.celery_app worker --loglevel=info --pool=solo
 )
 
-# Beat schedule — запускать каждую ночь в 03:00
 celery_app.conf.beat_schedule = {
     "hh-ingest-nightly": {
         "task": "app.workers.tasks.hh_ingest.run_hh_ingest",
-        "schedule": 60 * 60 * 24,   # каждые 24 часа
+        "schedule": 60 * 60 * 24,
+        "options": {"queue": "default"},
+    },
+    "rag-ingest-weekly": {
+        "task": "app.workers.tasks.rag_ingest.run_rag_ingest",
+        "schedule": 60 * 60 * 24 * 7,
+        "options": {"queue": "default"},
+    },
+    "outreach-follow-ups": {
+        "task": "app.workers.tasks.outreach.check_follow_ups",
+        "schedule": 60 * 60 * 12,
         "options": {"queue": "default"},
     },
 }

@@ -6,6 +6,7 @@ class Settings(BaseSettings):
         env_file=".env",
         env_file_encoding="utf-8",
         case_sensitive=False,
+        extra="ignore",  # игнорировать неизвестные переменные окружения
     )
 
     # App
@@ -14,6 +15,8 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = "development"
     DEBUG: bool = False
     API_V1_PREFIX: str = "/api/v1"
+    # TODO[MOCK]: удалить поле и все проверки settings.MOCK_LLM перед продакшеном
+    MOCK_LLM: bool = False  # True → заглушка вместо Ollama (dev/тесты)
     ALLOWED_ORIGINS: list[str] = ["http://localhost:3000", "http://localhost:5173"]
 
     # PostgreSQL
@@ -79,6 +82,7 @@ class Settings(BaseSettings):
     HH_CLIENT_ID: str = ""
     HH_CLIENT_SECRET: str = ""
     HH_ACCESS_TOKEN: str = ""
+    HH_AREA_ID: int = 3  # 3 = Екатеринбург; 1 = Москва; 2 = Санкт-Петербург
 
     # Superjob
     SUPERJOB_API_URL: str = "https://api.superjob.ru/2.0"
