@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 from app.core.config import settings
 from app.db.base import Base
 from app.db.session import get_db
-from app.main import app
+from app.main import app  # noqa: E402 — app.db.models уже загружены внутри main.py
 
 TEST_DATABASE_URL = (
     f"postgresql+asyncpg://{settings.POSTGRES_USER}:{settings.POSTGRES_PASSWORD}"
@@ -47,3 +47,16 @@ async def client(db_session):
         yield ac
 
     app.dependency_overrides.clear()
+
+
+@pytest_asyncio.fixture
+async def auth_client(client):
+    """Клиент с Bearer-токеном зарегистрированного пользователя."""
+    user = {"email": "s1_test@example.com", "full_name": "S1 User", "password": "pass1234"}
+    await client.post("/api/v1/auth/register", json=user)
+    resp = await client.post("/api/v1/auth/login", json={
+        "email": user["email"], "password": user["password"]
+    })
+    token = resp.json()["access_token"]
+    client.headers.update({"Authorization": f"Bearer {token}"})
+    return client
