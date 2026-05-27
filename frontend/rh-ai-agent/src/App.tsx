@@ -29,32 +29,42 @@ function LoadingFallback() {
 }
 
 export default function App() {
-  const { setAuth } = useAppStore()
+  const { setAuth, setUser } = useAppStore()
   const [isInitialized, setIsInitialized] = useState(false)
 
   useEffect(() => {
     const init = async () => {
       try {
-        // Проверяем токен в localStorage
+        // 🔥 Проверяем токен в localStorage
         const token = localStorage.getItem('auth_token')
+        
         if (token) {
-          // TODO: проверить токен на валидность через API
-          setAuth({
-            userId: 'current',
-            role: 'user',
-            token,
-          })
+          // Пытаемся получить данные пользователя
+          try {
+            const { authApi } = await import('@/api/endpoints')
+            const { data: userData } = await authApi.me()
+            
+            setAuth({
+              userId: String(userData.id),
+              role: 'user',
+              token,
+            })
+            setUser(userData)
+          } catch (err) {
+            // Токен невалиден - очищаем
+            console.warn('Invalid token, clearing...')
+            localStorage.removeItem('auth_token')
+          }
         }
       } catch (err) {
         console.warn('Auth init failed:', err)
-        localStorage.removeItem('auth_token')
       } finally {
         setIsInitialized(true)
       }
     }
 
     init()
-  }, [setAuth])
+  }, [setAuth, setUser])
 
   if (!isInitialized) {
     return <LoadingFallback />

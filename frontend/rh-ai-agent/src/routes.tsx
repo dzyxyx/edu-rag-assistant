@@ -1,4 +1,4 @@
-import { createBrowserRouter } from 'react-router-dom'
+import { createBrowserRouter, Navigate } from 'react-router-dom'
 import { AppShell } from '@/components/layout/AppShell'
 import Dashboard from '@/pages/Dashboard'
 import Analysis from '@/pages/Analysis'
@@ -13,11 +13,11 @@ import Login from '@/pages/Login'
 import ProtectedRoute from '@/components/ProtectedRoute'
 
 export const router = createBrowserRouter([
-  // Public routes
+  // 🔥 Public routes - доступны без авторизации
   { path: '/login', element: <Login /> },
   { path: '/register', element: <Register /> },
   
-  // Protected routes
+  // 🔥 Protected routes - требуют авторизации
   {
     path: '/',
     element: (

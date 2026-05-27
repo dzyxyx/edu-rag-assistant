@@ -15,7 +15,10 @@ export default function Register() {
   })
   
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
-  const [isRegistered, setIsRegistered] = useState(false)  // 🔥 Флаг успешной регистрации
+  const [isRegistered, setIsRegistered] = useState(false)
+  
+  // 🔥 Новое состояние для мгновенной блокировки кнопки
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const validate = () => {
     const errors: Record<string, string> = {}
@@ -43,17 +46,27 @@ export default function Register() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
+    //  Если уже отправляем или идет загрузка — выходим
+    if (isSubmitting || isLoading) return
+    
     if (!validate()) return
 
-    const result = await register({
-      email: formData.email,
-      password: formData.password,
-      full_name: formData.full_name,
-    })
+    // 🔥 Блокируем форму МГНОВЕННО (синхронно)
+    setIsSubmitting(true)
 
-    // 🔥 Если успешно — показываем экран подтверждения
-    if (result.success) {
-      setIsRegistered(true)
+    try {
+      const result = await register({
+        email: formData.email,
+        password: formData.password,
+        full_name: formData.full_name,
+      })
+
+      if (result.success) {
+        setIsRegistered(true)
+      }
+    } catch (err) {
+      // В случае ошибки разблокируем форму, чтобы можно было повторить
+      setIsSubmitting(false)
     }
   }
 
@@ -65,12 +78,11 @@ export default function Register() {
     }
   }
 
-  // 🔥 Экран успешной регистрации
+  // Экран успешной регистрации
   if (isRegistered) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
         <div className="w-full max-w-md">
-          {/* Logo */}
           <div className="text-center mb-8">
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary text-white mb-4 shadow-lg">
               <BrainCircuit size={32} />
@@ -79,55 +91,31 @@ export default function Register() {
             <p className="text-text-secondary mt-1">AI Agent для проектного обучения</p>
           </div>
 
-          {/* Success Card */}
           <Card className="p-8 shadow-xl text-center">
             <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
               <CheckCircle2 size={32} className="text-green-600" />
             </div>
             
-            <h2 className="text-xl font-bold text-text-primary mb-2">
-              Регистрация успешна!
-            </h2>
-            <p className="text-text-secondary mb-6">
-              Ваш аккаунт создан. Теперь войдите в систему, чтобы продолжить.
-            </p>
+            <h2 className="text-xl font-bold text-text-primary mb-2">Регистрация успешна!</h2>
+            <p className="text-text-secondary mb-6">Ваш аккаунт создан. Теперь войдите в систему.</p>
 
             <div className="space-y-3">
-              <Button 
-                asChild 
-                className="w-full py-2.5"
-              >
-                <Link to="/login">
-                  Войти в аккаунт
-                </Link>
+              <Button asChild className="w-full py-2.5">
+                <Link to="/login">Войти в аккаунт</Link>
               </Button>
-              
-              <Button 
-                variant="secondary" 
-                asChild
-                className="w-full py-2.5"
-              >
-                <Link to="/">
-                  На главную
-                </Link>
+              <Button variant="secondary" asChild className="w-full py-2.5">
+                <Link to="/">На главную</Link>
               </Button>
             </div>
           </Card>
-
-          {/* Footer */}
-          <p className="text-center text-xs text-text-secondary mt-6">
-            © 2024 ПроКомпетенции. УрФУ
-          </p>
         </div>
       </div>
     )
   }
 
-  // 🔥 Форма регистрации (обычный режим)
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
       <div className="w-full max-w-md">
-        {/* Logo */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary text-white mb-4 shadow-lg">
             <BrainCircuit size={32} />
@@ -136,16 +124,12 @@ export default function Register() {
           <p className="text-text-secondary mt-1">AI Agent для проектного обучения</p>
         </div>
 
-        {/* Register Form */}
         <Card className="p-6 shadow-xl">
           <h2 className="text-xl font-bold text-text-primary mb-6">Создать аккаунт</h2>
           
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Full Name */}
             <div>
-              <label className="block text-sm font-medium text-text-secondary mb-1">
-                ФИО
-              </label>
+              <label className="block text-sm font-medium text-text-secondary mb-1">ФИО</label>
               <div className="relative">
                 <User size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" />
                 <input
@@ -155,19 +139,14 @@ export default function Register() {
                   onChange={handleChange}
                   className="w-full pl-10 pr-4 py-2.5 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-light text-sm"
                   placeholder="Иванов Иван Иванович"
-                  disabled={isLoading}
+                  disabled={isSubmitting || isLoading}
                 />
               </div>
-              {validationErrors.full_name && (
-                <p className="mt-1 text-xs text-red-500">{validationErrors.full_name}</p>
-              )}
+              {validationErrors.full_name && <p className="mt-1 text-xs text-red-500">{validationErrors.full_name}</p>}
             </div>
 
-            {/* Email */}
             <div>
-              <label className="block text-sm font-medium text-text-secondary mb-1">
-                Email
-              </label>
+              <label className="block text-sm font-medium text-text-secondary mb-1">Email</label>
               <div className="relative">
                 <Mail size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" />
                 <input
@@ -177,19 +156,14 @@ export default function Register() {
                   onChange={handleChange}
                   className="w-full pl-10 pr-4 py-2.5 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-light text-sm"
                   placeholder="user@example.com"
-                  disabled={isLoading}
+                  disabled={isSubmitting || isLoading}
                 />
               </div>
-              {validationErrors.email && (
-                <p className="mt-1 text-xs text-red-500">{validationErrors.email}</p>
-              )}
+              {validationErrors.email && <p className="mt-1 text-xs text-red-500">{validationErrors.email}</p>}
             </div>
 
-            {/* Password */}
             <div>
-              <label className="block text-sm font-medium text-text-secondary mb-1">
-                Пароль
-              </label>
+              <label className="block text-sm font-medium text-text-secondary mb-1">Пароль</label>
               <div className="relative">
                 <Lock size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" />
                 <input
@@ -199,30 +173,25 @@ export default function Register() {
                   onChange={handleChange}
                   className="w-full pl-10 pr-4 py-2.5 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-light text-sm"
                   placeholder="••••••••"
-                  disabled={isLoading}
+                  disabled={isSubmitting || isLoading}
                 />
               </div>
-              {validationErrors.password && (
-                <p className="mt-1 text-xs text-red-500">{validationErrors.password}</p>
-              )}
+              {validationErrors.password && <p className="mt-1 text-xs text-red-500">{validationErrors.password}</p>}
             </div>
 
-            {/* Submit Button */}
             <Button
               type="submit"
               className="w-full py-2.5"
-              disabled={isLoading}
+              // 🔥 Блокируем кнопку, если идет локальная отправка ИЛИ загрузка из хука
+              disabled={isSubmitting || isLoading}
             >
-              {isLoading ? 'Регистрация...' : 'Зарегистрироваться'}
+              {isSubmitting || isLoading ? 'Регистрация...' : 'Зарегистрироваться'}
             </Button>
           </form>
 
-          {/* Login Link */}
           <div className="mt-6 text-center text-sm text-text-secondary">
             Уже есть аккаунт?{' '}
-            <Link to="/login" className="text-primary hover:underline font-medium">
-              Войти
-            </Link>
+            <Link to="/login" className="text-primary hover:underline font-medium">Войти</Link>
           </div>
         </Card>
       </div>

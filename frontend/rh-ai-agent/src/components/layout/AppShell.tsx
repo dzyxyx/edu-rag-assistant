@@ -31,7 +31,6 @@ export function AppShell() {
   const location = useLocation()
   const [isNotifOpen, setIsNotifOpen] = useState(false)
   
-  // Хук аутентификации
   const { logout } = useAuth()
 
   const handleLanguageToggle = () => {
@@ -40,7 +39,7 @@ export function AppShell() {
     i18n.changeLanguage(newLang)
   }
 
-  // Синхронизация высоты iframe с контентом (Mini App Bridge)
+  // Синхронизация высоты iframe
   useEffect(() => {
     try {
       if (window.parent === window) return
@@ -112,7 +111,10 @@ export function AppShell() {
             <Menu size={20} />
           </button>
           
-          {/* 🔥 Надписи с именем и должностью полностью удалены */}
+          {/* 🔥 Убрали блок с инициалами и email */}
+          <div className="hidden md:flex items-center gap-2 text-sm text-text-secondary">
+            {/* Пусто - убрали отображение имени пользователя */}
+          </div>
 
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="sm" onClick={handleLanguageToggle} className="h-8 w-8 p-0">
