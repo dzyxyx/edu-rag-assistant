@@ -88,7 +88,7 @@ backend/
 │   │   ├── companies/   # Скоринг компаний
 │   │   ├── industry/    # Анализ отрасли
 │   │   ├── rag/         # EdAgent RAG + WebSocket чат
-│   │   ├── outreach/    # Аутрич-кампании
+│   │   ├── outreach/    # Аутрич-компании
 │   │   ├── projects/    # Проекты и ТЗ
 │   │   ├── memory/      # Память агента
 │   │   └── dashboard/   # Дашборд
