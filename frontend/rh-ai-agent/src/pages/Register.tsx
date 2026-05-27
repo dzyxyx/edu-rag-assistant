@@ -17,7 +17,6 @@ export default function Register() {
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
   const [isRegistered, setIsRegistered] = useState(false)
   
-  // 🔥 Новое состояние для мгновенной блокировки кнопки
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const validate = () => {
@@ -46,12 +45,10 @@ export default function Register() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    //  Если уже отправляем или идет загрузка — выходим
     if (isSubmitting || isLoading) return
     
     if (!validate()) return
 
-    // 🔥 Блокируем форму МГНОВЕННО (синхронно)
     setIsSubmitting(true)
 
     try {
@@ -65,7 +62,6 @@ export default function Register() {
         setIsRegistered(true)
       }
     } catch (err) {
-      // В случае ошибки разблокируем форму, чтобы можно было повторить
       setIsSubmitting(false)
     }
   }
@@ -78,7 +74,6 @@ export default function Register() {
     }
   }
 
-  // Экран успешной регистрации
   if (isRegistered) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
@@ -182,7 +177,6 @@ export default function Register() {
             <Button
               type="submit"
               className="w-full py-2.5"
-              // 🔥 Блокируем кнопку, если идет локальная отправка ИЛИ загрузка из хука
               disabled={isSubmitting || isLoading}
             >
               {isSubmitting || isLoading ? 'Регистрация...' : 'Зарегистрироваться'}

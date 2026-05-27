@@ -15,7 +15,6 @@ export default function Communications() {
   const locale = i18n.language
   const { addToast } = useAppStore()
    const { ui, locale: storeLocale, setLocale, agentConfig } = useAppStore()
-  // Используем хук для получения данных из API
   const { 
     cards, 
     isLoading, 
@@ -33,7 +32,6 @@ export default function Communications() {
   const [agreementText, setAgreementText] = useState('')
   const [expandedCard, setExpandedCard] = useState<number | null>(null)
 
-  // Конфигурация колонок Kanban
   const columns = [
     { id: 'draft' as const, key: 'draft' },
     { id: 'sent' as const, key: 'sent' },

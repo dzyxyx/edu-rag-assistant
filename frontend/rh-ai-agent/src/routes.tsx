@@ -13,11 +13,9 @@ import Login from '@/pages/Login'
 import ProtectedRoute from '@/components/ProtectedRoute'
 
 export const router = createBrowserRouter([
-  // 🔥 Public routes - доступны без авторизации
   { path: '/login', element: <Login /> },
   { path: '/register', element: <Register /> },
   
-  // 🔥 Protected routes - требуют авторизации
   {
     path: '/',
     element: (

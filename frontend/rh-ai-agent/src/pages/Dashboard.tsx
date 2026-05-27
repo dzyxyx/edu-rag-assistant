@@ -11,7 +11,6 @@ export default function Dashboard() {
   const { t, i18n } = useTranslation()
   const locale = i18n.language
   
-  // Используем хук для получения статистики из API
   const { stats, isLoading } = useDashboard()
 
   if (isLoading) {
@@ -22,7 +21,6 @@ export default function Dashboard() {
     )
   }
 
-  // Формируем данные для графика на основе ответа API или используем моковые, если API еще не готов
   const chartData = stats?.conversion_chart || [
     { month: locale === 'ru' ? 'Июнь' : 'Jun', value: 2 },
     { month: locale === 'ru' ? 'Июль' : 'Jul', value: 5 },

@@ -11,14 +11,13 @@ export default defineConfig({
   },
   server: {
     port: 5173,
-    host: true, // важно для доступа из локальной сети
-    // 🔥 Проксирование API-запросов на бэкенд (devtunnels)
+    host: true, 
     proxy: {
       '/api': {
         target: 'https://487x6hb3-8000.euw.devtunnels.ms',
         changeOrigin: true,
         secure: false,
-        rewrite: (path) => path, // не меняем путь
+        rewrite: (path) => path, 
       },
     },
   },

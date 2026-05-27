@@ -10,13 +10,10 @@ export function useMemory() {
     queryKey: ['memory'],
     queryFn: () => memoryApi.getGraph().then(res => res.data),
     refetchInterval: 10000,
-    // 🔥 Возвращаем пустой массив, пока данные загружаются
     placeholderData: [],
-    // 🔥 Если бэкенд вернёт объект { items: [...] } или { nodes: [...] }, извлекаем массив
     select: (data) => {
       if (Array.isArray(data)) return data
       if (data && typeof data === 'object') {
-        // Проверяем разные возможные ключи
         if ('nodes' in data && Array.isArray(data.nodes)) return data.nodes
         if ('items' in data && Array.isArray(data.items)) return data.items
       }

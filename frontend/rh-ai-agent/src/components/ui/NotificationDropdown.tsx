@@ -11,12 +11,10 @@ interface Props {
 export function NotificationDropdown({ isOpen, onClose }: Props) {
   const { t } = useTranslation()
   
-  // 🔥 Получаем уведомления через хук (React Query)
   const { notifications, markAllRead, unreadCount } = useNotifications()
   
   const ref = useRef<HTMLDivElement>(null)
 
-  // Закрытие по клику вне
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) onClose()

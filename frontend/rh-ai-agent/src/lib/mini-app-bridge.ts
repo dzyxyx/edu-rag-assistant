@@ -1,4 +1,3 @@
-// 🔥 Безопасная проверка iframe
 function isInIframe(): boolean {
   try {
     return window.parent !== window
@@ -13,7 +12,7 @@ export const MiniAppBridge = {
     try {
       window.parent?.postMessage({ type, payload }, '*')
     } catch {
-      // ignore
+    
     }
   },
 
@@ -23,7 +22,7 @@ export const MiniAppBridge = {
       const height = document.documentElement.scrollHeight
       MiniAppBridge.send('RESIZE', { height, timestamp: Date.now() })
     } catch {
-      // ignore
+    
     }
   },
 

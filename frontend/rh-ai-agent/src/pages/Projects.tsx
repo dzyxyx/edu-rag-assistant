@@ -12,7 +12,6 @@ export default function Projects() {
   const { t, i18n } = useTranslation()
   const locale = i18n.language
   
-  // Используем хук для получения данных из API
   const { projects, isLoading, publish, isPublishing } = useProjects()
   
   const [selectedTz, setSelectedTz] = useState<number | null>(null)
@@ -27,7 +26,6 @@ export default function Projects() {
 
   const handleSaveTz = () => {
     if (selectedTz) {
-      // TODO: API call to save TZ if needed
       setIsTzModalOpen(false)
     }
   }

@@ -7,7 +7,6 @@ interface ProtectedRouteProps {
 export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   const token = localStorage.getItem('auth_token')
 
-  // 🔥 Если нет токена - редирект на /login
   if (!token) {
     return <Navigate to="/login" replace />
   }

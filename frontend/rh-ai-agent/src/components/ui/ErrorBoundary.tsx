@@ -17,7 +17,6 @@ export class ErrorBoundary extends Component<Props, State> {
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('Uncaught error:', error, errorInfo)
-    // Здесь можно отправить ошибку в аналитику
   }
 
   public render() {

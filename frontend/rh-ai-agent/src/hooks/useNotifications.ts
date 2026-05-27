@@ -8,17 +8,12 @@ export function useNotifications() {
     queryKey: ['notifications'],
     queryFn: () => notificationsApi.list().then(res => res.data),
     refetchInterval: 30000,
-    // 🔥 Возвращаем пустой массив, пока данные загружаются
     placeholderData: [],
-    // 🔥 Если бэкенд вернёт объект { items: [...] }, извлекаем массив
     select: (data) => {
-      // Если данные уже массив — возвращаем его
       if (Array.isArray(data)) return data
-      // Если объект с items — возвращаем items
       if (data && typeof data === 'object' && 'items' in data) {
         return (data as any).items
       }
-      // Иначе пустой массив
       return []
     }
   })

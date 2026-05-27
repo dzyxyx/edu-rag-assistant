@@ -35,11 +35,9 @@ export default function App() {
   useEffect(() => {
     const init = async () => {
       try {
-        // 🔥 Проверяем токен в localStorage
         const token = localStorage.getItem('auth_token')
         
         if (token) {
-          // Пытаемся получить данные пользователя
           try {
             const { authApi } = await import('@/api/endpoints')
             const { data: userData } = await authApi.me()
@@ -51,9 +49,10 @@ export default function App() {
             })
             setUser(userData)
           } catch (err) {
-            // Токен невалиден - очищаем
             console.warn('Invalid token, clearing...')
             localStorage.removeItem('auth_token')
+            setAuth(null)
+            setUser(null)
           }
         }
       } catch (err) {

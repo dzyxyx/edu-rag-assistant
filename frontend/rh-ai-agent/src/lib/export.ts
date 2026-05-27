@@ -2,10 +2,8 @@ import html2pdf from 'html2pdf.js'
 import { useAppStore } from '@/store/useAppStore'
 import i18n from '@/i18n'
 
-// 🔥 Вспомогательная функция для создания контейнера с правильным шрифтом (Решает проблему "кракозябр")
 const createPdfContainer = (contentHTML: string) => {
   const element = document.createElement('div')
-  // Явно указываем шрифт с поддержкой кириллицы
   element.style.fontFamily = '"Roboto", "Arial", sans-serif' 
   element.style.padding = '20px'
   element.style.color = '#0F172A'
@@ -13,7 +11,6 @@ const createPdfContainer = (contentHTML: string) => {
   element.style.lineHeight = '1.5'
   element.style.fontSize = '14px'
   
-  // Внедряем ссылку на шрифт прямо в элемент, чтобы он подгрузился при генерации PDF
   element.innerHTML = `
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
     ${contentHTML}
@@ -21,7 +18,6 @@ const createPdfContainer = (contentHTML: string) => {
   return element
 }
 
-// 1. Отчет по компаниям
 export function exportCompaniesReport() {
   const { companies } = useAppStore.getState()
   const t = i18n.t
@@ -66,7 +62,6 @@ export function exportCompaniesReport() {
   html2pdf().set(opt).from(createPdfContainer(content)).save()
 }
 
-// 2. Отчет по проектам (🔥 ДОБАВЛЕНО)
 export function exportProjectsReport() {
   const { projects } = useAppStore.getState()
   const t = i18n.t
@@ -112,7 +107,6 @@ export function exportProjectsReport() {
   html2pdf().set(opt).from(createPdfContainer(content)).save()
 }
 
-// 3. Партнерский пакет материалов (PDF)
 export function exportPartnerMaterials() {
   const t = i18n.t
   const { locale } = useAppStore.getState()

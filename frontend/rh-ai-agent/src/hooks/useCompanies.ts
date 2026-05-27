@@ -8,7 +8,6 @@ export function useCompanies(filters: CompanyFilters = {}) {
   const queryClient = useQueryClient()
   const { addToast } = useAppStore()
 
-  // Получение списка компаний
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['companies', filters],
     queryFn: () => companiesApi.list(filters).then(res => res.data),
@@ -16,7 +15,6 @@ export function useCompanies(filters: CompanyFilters = {}) {
     retry: 1,
   })
 
-  // Мутация для верификации
   const verifyMutation = useMutation({
     mutationFn: (ids: number[]) => companiesApi.verify(ids),
     onSuccess: async ({ data }) => {
@@ -34,7 +32,6 @@ export function useCompanies(filters: CompanyFilters = {}) {
     },
   })
 
-  // Мутация для скоринга
   const scoreMutation = useMutation({
     mutationFn: (ids: number[]) => companiesApi.score(ids),
     onSuccess: async ({ data }) => {

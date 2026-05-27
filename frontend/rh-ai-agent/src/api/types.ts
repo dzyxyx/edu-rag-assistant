@@ -58,7 +58,7 @@ export interface CompetencyGap {
   trend: 'growing' | 'stable' | 'declining'
 }
 
-// Outreach (CRM)
+// Outreach 
 export interface OutreachCard extends BaseEntity {
   company_id: number
   company_name: string
@@ -128,18 +128,52 @@ export interface Vacancy extends BaseEntity {
   url: string
 }
 
-// Chat
-export interface ChatMessage extends BaseEntity {
-  user_id: number
-  content: string
+// ==================== CHAT (RAG) ====================
+export interface ChatMessage {
+  id?: number
   role: 'user' | 'assistant' | 'system'
-  is_read: boolean
+  content: string
+  timestamp?: string
+  created_at?: string
+  session_id?: number
 }
 
-export interface ChatSession extends BaseEntity {
-  user_id: number
-  title: string
-  is_active: boolean
+export interface ChatSession {
+  id: number
+  title?: string
+  created_at?: string
+  updated_at?: string
+  user_id?: number
+  is_active?: boolean
+  message_count?: number
+}
+
+// 🔥 Запрос: вопрос + опциональный session_id
+export interface ChatRequest {
+  question: string
+  session_id?: number
+}
+
+// 🔥 Ответ: answer + session_id + message_id + опциональные sources
+export interface ChatResponse {
+  answer: string
+  session_id: number
+  message_id: number
+  sources?: any[]
+}
+
+export interface SessionsListResponse {
+  sessions: ChatSession[]
+  total?: number
+}
+
+// ==================== TASKS (для polling) ====================
+export interface TaskStatus {
+  task_id: string
+  status: 'PENDING' | 'STARTED' | 'SUCCESS' | 'FAILURE' | 'RETRY'
+  result?: any
+  error?: string
+  progress?: number
 }
 
 // User
@@ -159,15 +193,6 @@ export interface PaginatedResponse<T> {
   page: number
   limit: number
   pages: number
-}
-
-// Task status (Celery)
-export interface TaskStatus {
-  task_id: string
-  status: 'PENDING' | 'STARTED' | 'SUCCESS' | 'FAILURE' | 'RETRY'
-  result?: any
-  error?: string
-  progress?: number
 }
 
 // Dashboard stats
@@ -199,6 +224,7 @@ export interface Notification extends BaseEntity {
   link?: string
 }
 
+// Auth
 export interface UserCreate {
   email: string
   full_name: string

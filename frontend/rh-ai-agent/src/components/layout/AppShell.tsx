@@ -41,7 +41,6 @@ export function AppShell() {
     i18n.changeLanguage(newLang)
   }
 
-  // Синхронизация высоты iframe
   useEffect(() => {
     try {
       if (window.parent === window) return
@@ -113,9 +112,7 @@ export function AppShell() {
             <Menu size={20} />
           </button>
           
-          {/* Пустой блок (убрали инициалы) */}
           <div className="hidden md:flex items-center gap-2 text-sm text-text-secondary">
-            {/* Пусто */}
           </div>
 
           <div className="flex items-center gap-3">
@@ -136,7 +133,7 @@ export function AppShell() {
               <NotificationDropdown isOpen={isNotifOpen} onClose={() => setIsNotifOpen(false)} />
             </div>
             
-            {/* 🔥 Кнопка чата с ИИ */}
+            {/* Кнопка чата с ИИ */}
             <ChatButton onClick={() => setIsChatOpen(true)} />
           </div>
         </header>
@@ -146,7 +143,7 @@ export function AppShell() {
         </main>
       </div>
       
-      {/* 🔥 Окно чата с ИИ */}
+      {/* Окно чата с ИИ */}
       <ChatWindow isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
     </div>
   )

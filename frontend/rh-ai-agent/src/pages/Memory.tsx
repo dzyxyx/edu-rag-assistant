@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/Button'
 import { BrainCircuit, RefreshCw, Info, ZoomIn, ZoomOut, Loader2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
-// Словарь для перевода элементов графа (кроме компаний)
 const GRAPH_TRANSLATIONS: Record<string, string> = {
   "Интеграция модуля для": "Module Integration for",
   "Интеграция модуля": "Module Integration",
@@ -50,7 +49,6 @@ export default function Memory() {
   const { t, i18n } = useTranslation()
   const locale = i18n.language
   
-  // Используем хук для получения графа памяти из API
   const { nodes: apiNodes, isLoading, updateWeights, isUpdating } = useMemory()
 
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -60,18 +58,15 @@ export default function Memory() {
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
   const animationRef = useRef<number>()
 
-  // Преобразуем API-узлы в локальные узлы для отрисовки
   const initializeNodes = (): { nodes: Node[]; links: Link[] } => {
     const nodes: Node[] = []
     const links: Link[] = []
     const addedIds = new Set<string>()
 
-    // Группируем по типам для лучшего расположения
     const companies = apiNodes.filter(n => n.type === 'company')
     const skills = apiNodes.filter(n => n.type === 'skill')
     const competencies = apiNodes.filter(n => n.type === 'competency')
 
-    // Компании слева
     companies.forEach((n, i) => {
       const angle = (i / Math.max(companies.length, 1)) * Math.PI * 2
       const radius = 180
@@ -83,7 +78,6 @@ export default function Memory() {
       addedIds.add(String(n.id))
     })
 
-    // Навыки справа
     skills.forEach((n, i) => {
       const angle = (i / Math.max(skills.length, 1)) * Math.PI * 2
       const radius = 200
@@ -95,7 +89,6 @@ export default function Memory() {
       addedIds.add(String(n.id))
     })
 
-    // Компетенции сверху
     competencies.forEach((n, i) => {
       const x = 150 + (i * 120) % 700
       nodes.push({
@@ -105,7 +98,6 @@ export default function Memory() {
       addedIds.add(String(n.id))
     })
 
-    // Создаем связи
     apiNodes.forEach(n => {
       n.connections.forEach(conn => {
         if (addedIds.has(String(conn.to_id))) {
@@ -117,7 +109,6 @@ export default function Memory() {
     return { nodes, links }
   }
 
-  // Симуляция физики для красивого расположения узлов
   const simulateForce = (nodes: Node[], links: Link[], iterations: number = 250) => {
     const nodeMap = new Map(nodes.map(n => [n.id, n]))
     const center = { x: 450, y: 300 }
@@ -126,7 +117,6 @@ export default function Memory() {
       const temperature = 1 - iter / iterations
       nodes.forEach(n => { n.vx = 0; n.vy = 0 })
 
-      // Притяжение по связям
       links.forEach(link => {
         const source = nodeMap.get(link.source)
         const target = nodeMap.get(link.target)
@@ -139,7 +129,6 @@ export default function Memory() {
         }
       })
 
-      // Отталкивание
       for (let i = 0; i < nodes.length; i++) {
         for (let j = i + 1; j < nodes.length; j++) {
           const n1 = nodes[i]; const n2 = nodes[j]
@@ -151,13 +140,11 @@ export default function Memory() {
         }
       }
 
-      // Центрирование
       nodes.forEach(n => {
         const dx = center.x - n.x; const dy = center.y - n.y
         n.vx += dx * 0.0008; n.vy += dy * 0.0008
       })
 
-      // Применение сил
       nodes.forEach(n => {
         n.x += n.vx * temperature * 8
         n.y += n.vy * temperature * 8
@@ -182,7 +169,6 @@ export default function Memory() {
       ctx.translate(offset.x, offset.y)
       ctx.scale(scale, scale)
 
-      // Линии связей
       ctx.strokeStyle = '#94A3B8'
       ctx.lineWidth = 1.2
       ctx.globalAlpha = 0.4
@@ -195,7 +181,6 @@ export default function Memory() {
       })
       ctx.globalAlpha = 1
 
-      // Узлы
       nodes.forEach(node => {
         ctx.beginPath(); ctx.arc(node.x + 2, node.y + 2, node.radius, 0, 2 * Math.PI)
         ctx.fillStyle = 'rgba(0,0,0,0.08)'; ctx.fill()
@@ -214,7 +199,6 @@ export default function Memory() {
         ctx.fill()
         ctx.strokeStyle = 'rgba(255,255,255,0.6)'; ctx.lineWidth = 2; ctx.stroke()
         
-        // Подпись с фоном
         ctx.font = `${node.weight > 5 ? '600' : '500'} 11px Inter`
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
         const metrics = ctx.measureText(node.label)

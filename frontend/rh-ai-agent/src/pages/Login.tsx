@@ -16,7 +16,7 @@ export default function Login() {
   
   const [errors, setErrors] = useState<Record<string, string>>({})
   
-  // 🔥 Новое состояние для мгновенной блокировки кнопки
+  
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const validate = () => {
@@ -39,12 +39,10 @@ export default function Login() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    // 🔥 Если уже отправляем или идет загрузка — выходим
     if (isSubmitting || isLoading) return
     
     if (!validate()) return
 
-    // 🔥 Блокируем форму МГНОВЕННО (синхронно)
     setIsSubmitting(true)
 
     try {
@@ -57,7 +55,6 @@ export default function Login() {
         navigate('/')
       }
     } catch (err) {
-      // В случае ошибки разблокируем форму
       setIsSubmitting(false)
     }
   }

@@ -16,7 +16,6 @@ export default function Settings() {
   })
   const [isLoading, setIsLoading] = useState(false)
 
-  // Загружаем данные пользователя при монтировании
   useEffect(() => {
     if (user) {
       setFormData({
@@ -31,10 +30,6 @@ export default function Settings() {
     setIsLoading(true)
     
     try {
-      // TODO: API call to update user profile
-      // await authApi.updateProfile(formData)
-      
-      // Временно обновляем локально
       if (user) {
         setUser({
           ...user,

@@ -1,55 +1,65 @@
-import apiClient from './clients'
+// 🔥 Импортируем ВСЕ типы из types.ts (включая Chat)
+import apiClient, { chatClient } from './clients'
 import type {
+  // Company
   Company,
   CompanyFilters,
   CompaniesResponse,
+  // Competency
   Competency,
   CompetencyGap,
+  // Outreach
   OutreachCard,
   FollowUp,
+  // Project
   Project,
+  // Memory
   MemoryNode,
+  // Vacancy
   Vacancy,
   PaginatedResponse,
+  // Task
   TaskStatus,
+  // Dashboard
   DashboardStats,
+  // Notifications
   Notification,
-  UserCreate, 
-  UserRead, 
-  UserLogin, 
-  TokenResponse
+  // Chat (RAG)
+  ChatMessage,
+  ChatSession,
+  ChatRequest,
+  ChatResponse,
+  SessionsListResponse,
+  // User / Auth
+  UserCreate,
+  UserRead,
+  UserLogin,
+  TokenResponse,
 } from './types'
 
+// ==================== COMPANIES ====================
 export const companiesApi = {
-  // Список компаний с фильтрацией
   list: (filters?: CompanyFilters) =>
     apiClient.get<CompaniesResponse>('/companies', { params: filters }),
 
-  // Получить компанию по ID
   getById: (companyId: number) =>
     apiClient.get<Company>(`/companies/${companyId}`),
 
-  // Создать компанию
   create: (data: Partial<Company>) =>
     apiClient.post<Company>('/companies', data),
 
-  // Обновить компанию
   update: (companyId: number, data: Partial<Company>) =>
     apiClient.patch<Company>(`/companies/${companyId}`, data),
 
-  // Удалить компанию
   delete: (companyId: number) =>
     apiClient.delete(`/companies/${companyId}`),
 
-  // Скоринг компаний
   score: (companyIds: number[]) =>
     apiClient.post<{ task_id: string }>('/companies/score', { company_ids: companyIds }),
 
-  // Верификация компаний
   verify: (companyIds: number[]) =>
     apiClient.post<{ task_id: string }>('/companies/verify', { company_ids: companyIds }),
 
-  // Экспорт компаний
   export: (filters?: CompanyFilters) =>
     apiClient.get<Blob>('/companies/export', { 
       params: filters,
@@ -57,6 +67,7 @@ export const companiesApi = {
     }),
 }
 
+// ==================== COMPETENCIES ====================
 export const competenciesApi = {
   list: () =>
     apiClient.get<Competency[]>('/competencies'),
@@ -71,6 +82,7 @@ export const competenciesApi = {
     apiClient.post('/competencies/approve-strategy', { industry, skills }),
 }
 
+// ==================== OUTREACH ====================
 export const outreachApi = {
   list: () =>
     apiClient.get<OutreachCard[]>('/outreach'),
@@ -106,6 +118,7 @@ export const outreachApi = {
     apiClient.post(`/outreach/${id}/feedback`, { feedback }),
 }
 
+// ==================== PROJECTS ====================
 export const projectsApi = {
   list: () =>
     apiClient.get<Project[]>('/projects'),
@@ -129,6 +142,7 @@ export const projectsApi = {
     apiClient.get<Blob>('/projects/export', { responseType: 'blob' }),
 }
 
+// ==================== MEMORY ====================
 export const memoryApi = {
   getGraph: () =>
     apiClient.get<MemoryNode[]>('/memory/graph'),
@@ -146,6 +160,7 @@ export const memoryApi = {
     apiClient.delete('/memory/clear'),
 }
 
+// ==================== VACANCIES ====================
 export const vacanciesApi = {
   list: (page = 1, limit = 50) =>
     apiClient.get<PaginatedResponse<Vacancy>>('/vacancies', { params: { page, limit } }),
@@ -157,14 +172,16 @@ export const vacanciesApi = {
     apiClient.post<{ task_id: string }>('/vacancies/sync-hh'),
 }
 
+// ==================== DASHBOARD ====================
 export const dashboardApi = {
   stats: () =>
     apiClient.get<DashboardStats>('/dashboard/stats'),
 
   activities: (limit = 20) =>
-    apiClient.get(`/dashboard/activities?limit=${limit}`),
+    apiClient.get<ActivityLog[]>(`/dashboard/activities?limit=${limit}`),
 }
 
+// ==================== NOTIFICATIONS ====================
 export const notificationsApi = {
   list: () =>
     apiClient.get<Notification[]>('/notifications'),
@@ -176,6 +193,7 @@ export const notificationsApi = {
     apiClient.post('/notifications/mark-all-read'),
 }
 
+// ==================== TASKS (polling helper) ====================
 export const tasksApi = {
   getStatus: (taskId: string) =>
     apiClient.get<TaskStatus>(`/tasks/${taskId}`),
@@ -207,23 +225,31 @@ export const tasksApi = {
   },
 }
 
+// ==================== CHAT (RAG) ====================
+// 🔥 Используем chatClient с увеличенным таймаутом
+// 🔥 Типы импортированы из types.ts — никаких дубликатов!
 export const chatApi = {
-  sendMessage: (message: string, context?: any) =>
-    apiClient.post('/chat/send', { message, context }),
+  // Отправить вопрос → получить ответ (или task_id, если асинхронно)
+  sendMessage: (data: ChatRequest) =>
+    chatClient.post<ChatResponse>('/rag/chat', {
+      question: data.question,
+      session_id: data.session_id,
+    }),
 
-  getHistory: (limit = 50) =>
-    apiClient.get(`/chat/history?limit=${limit}`),
+  // Получить список сессий чата
+  getSessions: () =>
+    chatClient.get<ChatSession[]>('/rag/sessions'),
 
-  clearHistory: () =>
-    apiClient.delete('/chat/history'),
+  // Получить сообщения конкретной сессии
+  getMessages: (sessionId: number) =>
+    chatClient.get<ChatMessage[]>(`/rag/sessions/${sessionId}/messages`),
 }
 
+// ==================== AUTH ====================
 export const authApi = {
-  // 🔥 Теперь возвращает UserRead (данные пользователя), а не токен
   register: (data: UserCreate) =>
     apiClient.post<UserRead>('/auth/register', data),
 
-  // 🔥 Возвращает TokenResponse (access_token + refresh_token)
   login: (data: UserLogin) =>
     apiClient.post<TokenResponse>('/auth/login', data),
 
