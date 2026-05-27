@@ -6,14 +6,16 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.v1.router import api_router
 from app.core.config import settings
 from app.core.logging import setup_logging
+from app.core.redis import init_redis, close_redis
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     setup_logging()
-    # TODO: init DB pool, Chroma client, Redis pool
+    await init_redis()
+    # TODO: init DB pool, Chroma client
     yield
-    # TODO: graceful shutdown
+    await close_redis()
 
 
 def create_app() -> FastAPI:
@@ -27,7 +29,7 @@ def create_app() -> FastAPI:
 
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=settings.ALLOWED_ORIGINS,
+        allow_origins=["*"],
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
