@@ -1,0 +1,115 @@
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+    )
+
+    # App
+    PROJECT_NAME: str = "RH AI memory and EdAgent"
+    VERSION: str = "0.1.0"
+    ENVIRONMENT: str = "development"
+    DEBUG: bool = False
+    API_V1_PREFIX: str = "/api/v1"
+    ALLOWED_ORIGINS: list[str] = ["http://localhost:3000", "http://localhost:5173"]
+
+    # PostgreSQL
+    POSTGRES_HOST: str = "localhost"
+    POSTGRES_PORT: int = 5432
+    POSTGRES_DB: str = "edagent"
+    POSTGRES_USER: str = "edagent"
+    POSTGRES_PASSWORD: str = "edagent"
+
+    @property
+    def DATABASE_URL(self) -> str:
+        return (
+            f"postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
+            f"@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
+        )
+
+    @property
+    def DATABASE_URL_SYNC(self) -> str:
+        return (
+            f"postgresql+psycopg2://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
+            f"@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
+        )
+
+    # Redis
+    REDIS_HOST: str = "localhost"
+    REDIS_PORT: int = 6379
+    REDIS_PASSWORD: str = ""
+    REDIS_DB: int = 0
+
+    @property
+    def REDIS_URL(self) -> str:
+        if self.REDIS_PASSWORD:
+            return f"redis://:{self.REDIS_PASSWORD}@{self.REDIS_HOST}:{self.REDIS_PORT}/{self.REDIS_DB}"
+        return f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}/{self.REDIS_DB}"
+
+    # Celery
+    CELERY_BROKER_URL: str = "redis://localhost:6379/1"
+    CELERY_RESULT_BACKEND: str = "redis://localhost:6379/2"
+
+    # Chroma
+    CHROMA_HOST: str = "localhost"
+    CHROMA_PORT: int = 8001
+    CHROMA_COLLECTION_RAG: str = "edagent_knowledge"
+    CHROMA_COLLECTION_MEMORY: str = "agent_memory"
+    CHROMA_COLLECTION_VACANCIES: str = "vacancies"
+
+    # JWT
+    SECRET_KEY: str = "CHANGE_ME_IN_PRODUCTION"
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 30
+
+    # Ollama (локальный LLM-сервер)
+    OLLAMA_BASE_URL: str = "http://localhost:11434"
+    OLLAMA_MODEL: str = "llama3.1:8b"          # модель по умолчанию, меняется в .env
+
+    # HuggingFace (для локальных моделей и QLoRA)
+    HF_TOKEN: str = ""
+    EMBEDDING_MODEL: str = "sentence-transformers/paraphrase-multilingual-mpnet-base-v2"
+
+    # HeadHunter
+    HH_API_URL: str = "https://api.hh.ru"
+    HH_CLIENT_ID: str = ""
+    HH_CLIENT_SECRET: str = ""
+    HH_ACCESS_TOKEN: str = ""
+
+    # Superjob
+    SUPERJOB_API_URL: str = "https://api.superjob.ru/2.0"
+    SUPERJOB_CLIENT_ID: str = ""
+    SUPERJOB_SECRET_KEY: str = ""
+
+    # LinkedIn
+    LINKEDIN_CLIENT_ID: str = ""
+    LINKEDIN_CLIENT_SECRET: str = ""
+    LINKEDIN_ACCESS_TOKEN: str = ""
+
+    # Email (SendGrid)
+    SENDGRID_API_KEY: str = ""
+    SENDGRID_FROM_EMAIL: str = ""
+    SENDGRID_FROM_NAME: str = "ПроКомпетенции"
+
+    # Email (IMAP входящие)
+    IMAP_HOST: str = ""
+    IMAP_PORT: int = 993
+    IMAP_USER: str = ""
+    IMAP_PASSWORD: str = ""
+
+    # Spark-Interfax
+    SPARK_API_KEY: str = ""
+    SPARK_API_URL: str = "https://api.spark-interfax.ru"
+
+    # Sentry
+    SENTRY_DSN: str = ""
+
+    # Rate limiting
+    RATE_LIMIT_PER_MINUTE: int = 60
+
+
+settings = Settings()

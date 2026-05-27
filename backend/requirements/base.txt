@@ -1,0 +1,60 @@
+# ── Web Framework ─────────────────────────────────────────────
+fastapi==0.115.5
+uvicorn[standard]==0.32.1
+python-multipart==0.0.12
+
+# ── Database ──────────────────────────────────────────────────
+sqlalchemy[asyncio]==2.0.36
+asyncpg==0.30.0
+psycopg2-binary==2.9.10          # только для Alembic (sync)
+alembic==1.14.0
+
+# ── Redis & Celery ────────────────────────────────────────────
+redis[hiredis]==5.2.1
+celery[redis]==5.4.0
+flower==2.0.1
+
+# ── Auth ──────────────────────────────────────────────────────
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+
+# ── Config ────────────────────────────────────────────────────
+pydantic==2.10.3
+pydantic-settings==2.6.1
+email-validator==2.3.0
+
+# ── LLM & RAG ────────────────────────────────────────────────
+langchain==0.3.13
+langchain-community==0.3.13
+langchain-chroma==0.1.4
+chromadb>=0.6.0                   # 0.6+ снял ограничение на tokenizers
+sentence-transformers>=2.7.0      # эмбеддинги без привязки к конкретной версии
+ollama==0.4.4                     # python-клиент для Ollama (локальный LLM)
+
+# ── NLP ───────────────────────────────────────────────────────
+spacy==3.8.3
+
+# ── ML / Fine-tuning (QLoRA) — устанавливается отдельно: requirements/ml.txt ──
+# transformers, peft, bitsandbytes, torch — нужны только в Спринте 8
+# не устанавливать сейчас во избежание конфликтов tokenizers
+
+# ── Scraping ──────────────────────────────────────────────────
+scrapy==2.12.0
+beautifulsoup4==4.12.3
+playwright==1.49.0
+httpx==0.28.1
+aiohttp==3.11.10
+
+# ── Email ─────────────────────────────────────────────────────
+sendgrid==6.11.0
+aiosmtplib==3.0.2
+aioimaplib==2.0.1
+jinja2==3.1.5
+
+# ── Rate limiting ─────────────────────────────────────────────
+slowapi==0.1.9
+
+# ── Logging & Monitoring ──────────────────────────────────────
+loguru==0.7.3
+sentry-sdk[fastapi]==2.19.2
+prometheus-fastapi-instrumentator==7.0.0

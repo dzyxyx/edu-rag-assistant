@@ -1,0 +1,124 @@
+services:
+  # ─── PostgreSQL ────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: edagent_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-edagent}
+      POSTGRES_USER: ${POSTGRES_USER:-edagent}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-edagent}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-edagent}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── Redis ─────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: edagent_redis
+    restart: unless-stopped
+    # без пароля для локальной разработки
+    # для прода: command: redis-server --requirepass yourpassword
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── Chroma (векторная БД) ─────────────────────────────────────
+  chroma:
+    image: chromadb/chroma:latest
+    container_name: edagent_chroma
+    restart: unless-stopped
+    ports:
+      - "8001:8000"
+    volumes:
+      - chroma_data:/chroma/chroma
+    environment:
+      ANONYMIZED_TELEMETRY: "false"
+      ALLOW_RESET: "true"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v2/heartbeat"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  # ─── FastAPI приложение ────────────────────────────────────────
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: edagent_app
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./logs:/app/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      chroma:
+        condition: service_healthy
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  # ─── Celery Worker ─────────────────────────────────────────────
+  celery_worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: edagent_celery_worker
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - ./logs:/app/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: celery -A app.workers.celery_app worker --loglevel=info --concurrency=4
+
+  # ─── Celery Beat (планировщик) ─────────────────────────────────
+  celery_beat:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: edagent_celery_beat
+    restart: unless-stopped
+    env_file: .env
+    depends_on:
+      - redis
+    command: celery -A app.workers.celery_app beat --loglevel=info
+
+  # ─── Flower (мониторинг Celery) ────────────────────────────────
+  flower:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: edagent_flower
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "5555:5555"
+    depends_on:
+      - redis
+    command: celery -A app.workers.celery_app flower --port=5555
+
+volumes:
+  postgres_data:
+  redis_data:
+  chroma_data:

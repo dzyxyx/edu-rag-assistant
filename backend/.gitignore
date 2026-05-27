@@ -1,0 +1,51 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+.venv/
+venv/
+env/
+
+# FastAPI / Uvicorn
+*.log
+
+# Env
+.env
+.env.*
+!.env.example
+
+# Alembic
+alembic/versions/*.py
+!alembic/versions/.gitkeep
+
+# Logs
+logs/
+*.log
+
+# Testing
+.coverage
+.pytest_cache/
+htmlcov/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Docker
+.dockerignore
+
+# ML models (веса моделей — только корневая папка, не app/db/models/)
+*.pt
+*.pth
+*.safetensors
+/models/
+
+# Scrapy
+.scrapy/
