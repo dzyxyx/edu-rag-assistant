@@ -8,11 +8,23 @@ import Projects from '@/pages/Projects'
 import Memory from '@/pages/Memory'
 import Settings from '@/pages/Settings'
 import NotFound from '@/pages/NotFound'
+import Register from '@/pages/Register'
+import Login from '@/pages/Login'
+import ProtectedRoute from '@/components/ProtectedRoute'
 
 export const router = createBrowserRouter([
+  // Public routes
+  { path: '/login', element: <Login /> },
+  { path: '/register', element: <Register /> },
+  
+  // Protected routes
   {
     path: '/',
-    element: <AppShell />,
+    element: (
+      <ProtectedRoute>
+        <AppShell />
+      </ProtectedRoute>
+    ),
     children: [
       { index: true, element: <Dashboard /> },
       { path: 'analysis', element: <Analysis /> },
@@ -23,5 +35,5 @@ export const router = createBrowserRouter([
       { path: 'settings', element: <Settings /> },
       { path: '*', element: <NotFound /> }
     ]
-  }
+  },
 ])

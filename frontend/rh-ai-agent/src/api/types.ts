@@ -6,29 +6,34 @@ export interface BaseEntity {
 }
 
 // Company
-export interface Company extends BaseEntity {
+export interface Company {
+  id: number
   name: string
-  industry: string
-  score: number
-  region: string
-  size: 'large' | 'medium' | 'small'
-  tech_stack: string[]
-  status: 'active' | 'pending' | 'new'
-  contact_person?: string
-  contact_email?: string
+  inn?: string
   website?: string
   description?: string
+  industry?: string
+  region?: string
+  employee_count?: number
+  email?: string
+  score: number
+  score_tech_stack?: number
+  score_scale?: number
+  score_reputation?: number
+  score_edu_experience?: number
+  status: string
+  source?: string
+  created_at: string
 }
 
 export interface CompanyFilters {
+  status?: string | null
+  limit?: number
+  offset?: number
   search?: string
   industry?: string
   region?: string
-  size?: string
   min_score?: number
-  tech_stack?: string
-  page?: number
-  limit?: number
 }
 
 // Competency
@@ -187,4 +192,29 @@ export interface Notification extends BaseEntity {
   message: string
   is_read: boolean
   link?: string
+}
+
+export interface UserCreate {
+  email: string
+  full_name: string
+  password: string
+}
+
+export interface UserLogin {
+  email: string
+  password: string
+}
+
+export interface UserRead {
+  id: number
+  email: string
+  full_name: string
+  is_active: boolean
+  created_at: string
+}
+
+export interface TokenResponse {
+  access_token: string
+  refresh_token: string
+  token_type?: string 
 }

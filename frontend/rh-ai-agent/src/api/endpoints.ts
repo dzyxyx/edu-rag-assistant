@@ -1,4 +1,4 @@
-import apiClient from './client'
+import apiClient from './clients'
 import type {
   Company,
   CompanyFilters,
@@ -13,14 +13,18 @@ import type {
   TaskStatus,
   DashboardStats,
   Notification,
+  UserCreate, 
+  UserRead, 
+  UserLogin, 
+  TokenResponse
 } from './types'
 
 export const companiesApi = {
   list: (filters: CompanyFilters) =>
     apiClient.get<PaginatedResponse<Company>>('/companies', { params: filters }),
 
-  getById: (id: number) =>
-    apiClient.get<Company>(`/companies/${id}`),
+  getById: (companyId: number) =>
+    apiClient.get<Company>(`/companies/${companyId}`),
 
   create: (data: Partial<Company>) =>
     apiClient.post<Company>('/companies', data),
@@ -203,4 +207,20 @@ export const chatApi = {
 
   clearHistory: () =>
     apiClient.delete('/chat/history'),
+}
+
+export const authApi = {
+  // 🔥 Теперь возвращает UserRead (данные пользователя), а не токен
+  register: (data: UserCreate) =>
+    apiClient.post<UserRead>('/auth/register', data),
+
+  // 🔥 Возвращает TokenResponse (access_token + refresh_token)
+  login: (data: UserLogin) =>
+    apiClient.post<TokenResponse>('/auth/login', data),
+
+  me: () =>
+    apiClient.get<UserRead>('/auth/me'),
+
+  logout: () =>
+    apiClient.post('/auth/logout'),
 }

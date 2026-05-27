@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { useAppStore } from '@/store/useAppStore'
+import { useNotifications } from '@/hooks/useNotifications'  // 🔥 Используем хук
 import { useTranslation } from 'react-i18next'
 import { CheckCheck, Bell, AlertTriangle, MessageSquare, Send, Clock } from 'lucide-react'
 
@@ -10,7 +10,10 @@ interface Props {
 
 export function NotificationDropdown({ isOpen, onClose }: Props) {
   const { t } = useTranslation()
-  const { notifications, markAllNotificationsRead } = useAppStore()
+  
+  // 🔥 Получаем уведомления через хук (React Query)
+  const { notifications, markAllRead, unreadCount } = useNotifications()
+  
   const ref = useRef<HTMLDivElement>(null)
 
   // Закрытие по клику вне
@@ -22,14 +25,16 @@ export function NotificationDropdown({ isOpen, onClose }: Props) {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [isOpen, onClose])
 
-  const unreadCount = notifications.filter(n => !n.read).length
-
-  const typeIcons = {
+  const typeIcons: Record<string, JSX.Element> = {
     escalation: <AlertTriangle size={16} className="text-amber-500" />,
     followup: <Clock size={16} className="text-blue-500" />,
     response: <MessageSquare size={16} className="text-green-500" />,
     system: <Bell size={16} className="text-slate-500" />
   }
+
+  // 🔥 Безопасная проверка: notifications может быть пустым массивом
+  const safeNotifications = notifications || []
+  const safeUnreadCount = unreadCount || 0
 
   return (
     <div 
@@ -39,33 +44,44 @@ export function NotificationDropdown({ isOpen, onClose }: Props) {
       <div className="p-3 border-b border-border flex justify-between items-center bg-slate-50 rounded-t-xl">
         <h3 className="font-semibold text-sm text-text-primary flex items-center gap-2">
           <Bell size={16} /> {t('notifications.title')}
-          {unreadCount > 0 && <span className="bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">{unreadCount}</span>}
+          {safeUnreadCount > 0 && (
+            <span className="bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">
+              {safeUnreadCount}
+            </span>
+          )}
         </h3>
-        {unreadCount > 0 && (
-          <button onClick={markAllNotificationsRead} className="text-xs text-primary hover:underline flex items-center gap-1">
+        {safeUnreadCount > 0 && (
+          <button 
+            onClick={markAllRead} 
+            className="text-xs text-primary hover:underline flex items-center gap-1"
+          >
             <CheckCheck size={12} /> {t('notifications.markAllRead')}
           </button>
         )}
       </div>
 
       <div className="max-h-80 overflow-y-auto">
-        {notifications.length === 0 ? (
-          <div className="p-6 text-center text-text-secondary text-sm">{t('notifications.empty')}</div>
+        {safeNotifications.length === 0 ? (
+          <div className="p-6 text-center text-text-secondary text-sm">
+            {t('notifications.empty')}
+          </div>
         ) : (
-          notifications.map((n) => (
+          safeNotifications.map((n) => (
             <button
               key={n.id}
-              onClick={() => !n.read && markAllNotificationsRead()}
-              className={`w-full text-left p-3 border-b border-border last:border-0 hover:bg-slate-50 transition-colors flex gap-3 ${!n.read ? 'bg-blue-50/50' : ''}`}
+              onClick={() => !n.is_read && markAllRead()}
+              className={`w-full text-left p-3 border-b border-border last:border-0 hover:bg-slate-50 transition-colors flex gap-3 ${!n.is_read ? 'bg-blue-50/50' : ''}`}
             >
-              <div className="mt-1 shrink-0">{typeIcons[n.type]}</div>
+              <div className="mt-1 shrink-0">
+                {typeIcons[n.type] || typeIcons.system}
+              </div>
               <div className="flex-1 min-w-0">
-                <p className={`text-sm ${!n.read ? 'font-semibold text-text-primary' : 'text-text-secondary'}`}>
+                <p className={`text-sm ${!n.is_read ? 'font-semibold text-text-primary' : 'text-text-secondary'}`}>
                   {t(n.i18nKey, n.params || {})}
                 </p>
                 <p className="text-xs text-gray-400 mt-1">{n.timestamp}</p>
               </div>
-              {!n.read && <div className="w-2 h-2 rounded-full bg-primary mt-2 shrink-0" />}
+              {!n.is_read && <div className="w-2 h-2 rounded-full bg-primary mt-2 shrink-0" />}
             </button>
           ))
         )}

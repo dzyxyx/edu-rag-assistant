@@ -8,6 +8,8 @@ export function useNotifications() {
     queryKey: ['notifications'],
     queryFn: () => notificationsApi.list().then(res => res.data),
     refetchInterval: 30000,
+    // 🔥 Возвращаем пустой массив, если данных ещё нет
+    placeholderData: [],
   })
 
   const markAllReadMutation = useMutation({
@@ -17,10 +19,12 @@ export function useNotifications() {
     },
   })
 
-  const unreadCount = data?.filter(n => !n.is_read).length || 0
+  // 🔥 Безопасный подсчёт непрочитанных
+  const notifications = data || []
+  const unreadCount = notifications.filter(n => !n.is_read).length
 
   return {
-    notifications: data || [],
+    notifications,
     isLoading,
     unreadCount,
     markAllRead: markAllReadMutation.mutate,

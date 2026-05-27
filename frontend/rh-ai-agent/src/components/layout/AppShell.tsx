@@ -12,6 +12,7 @@ import { useTranslation } from 'react-i18next'
 import { useState } from 'react'
 import { NotificationDropdown } from '@/components/ui/NotificationDropdown'
 import { MiniAppBridge } from '@/lib/mini-app-bridge'
+import { useAuth } from '@/hooks/useAuth'
 
 const NAV_ITEMS = [
   { icon: LayoutDashboard, key: 'nav.dashboard', path: '/' },
@@ -29,6 +30,9 @@ export function AppShell() {
   const { i18n, t } = useTranslation()
   const location = useLocation()
   const [isNotifOpen, setIsNotifOpen] = useState(false)
+  
+  // Хук аутентификации
+  const { logout } = useAuth()
 
   const handleLanguageToggle = () => {
     const newLang = locale === 'ru' ? 'en' : 'ru'
@@ -38,11 +42,32 @@ export function AppShell() {
 
   // Синхронизация высоты iframe с контентом (Mini App Bridge)
   useEffect(() => {
-    const updateHeight = () => MiniAppBridge.updateHeight()
-    
+    try {
+      if (window.parent === window) return
+    } catch {
+      return
+    }
+
+    let timeout: ReturnType<typeof setTimeout> | null = null
+
+    const updateHeight = () => {
+      if (timeout) clearTimeout(timeout)
+      timeout = setTimeout(() => {
+        try {
+          MiniAppBridge.updateHeight()
+        } catch {
+          // ignore
+        }
+      }, 100)
+    }
+
     updateHeight()
     window.addEventListener('resize', updateHeight)
-    return () => window.removeEventListener('resize', updateHeight)
+    
+    return () => {
+      window.removeEventListener('resize', updateHeight)
+      if (timeout) clearTimeout(timeout)
+    }
   }, [location.pathname])
 
   return (
@@ -71,7 +96,10 @@ export function AppShell() {
         </nav>
 
         <div className="p-3 border-t border-white/10">
-          <button className="flex items-center gap-3 px-3 py-2 text-sm text-slate-300 hover:text-white w-full transition-colors">
+          <button 
+            onClick={logout}
+            className="flex items-center gap-3 px-3 py-2 text-sm text-slate-300 hover:text-white w-full transition-colors"
+          >
             <LogOut size={20} className="shrink-0" />
             {ui.sidebarOpen && <span>{locale === 'ru' ? 'Выйти' : 'Logout'}</span>}
           </button>
@@ -84,10 +112,7 @@ export function AppShell() {
             <Menu size={20} />
           </button>
           
-          <div className="hidden md:flex items-center gap-2 text-sm text-text-secondary">
-            <span>Иванов А.С.</span>
-            <span className="text-text-primary font-medium">Администратор УрФУ</span>
-          </div>
+          {/* 🔥 Надписи с именем и должностью полностью удалены */}
 
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="sm" onClick={handleLanguageToggle} className="h-8 w-8 p-0">
