@@ -1,0 +1,13 @@
+{
+  "dependencies": {
+    "html2pdf.js": "^0.14.0",
+    "i18next": "^26.2.0",
+    "i18next-browser-languagedetector": "^8.2.1",
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.8",
+    "react-i18next": "^17.0.8"
+  },
+  "devDependencies": {
+    "@types/html2pdf.js": "^0.10.0"
+  }
+}
