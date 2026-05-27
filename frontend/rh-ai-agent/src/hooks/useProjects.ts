@@ -9,6 +9,16 @@ export function useProjects() {
   const { data, isLoading } = useQuery({
     queryKey: ['projects'],
     queryFn: () => projectsApi.list().then(res => res.data),
+    // 🔥 Возвращаем пустой массив, пока данные загружаются
+    placeholderData: [],
+    // 🔥 Если бэкенд вернёт объект { items: [...] }, извлекаем массив
+    select: (data) => {
+      if (Array.isArray(data)) return data
+      if (data && typeof data === 'object' && 'items' in data) {
+        return (data as any).items
+      }
+      return []
+    }
   })
 
   const publishMutation = useMutation({
@@ -28,8 +38,11 @@ export function useProjects() {
     },
   })
 
+  // 🔥 Гарантируем, что projects — всегда массив
+  const projects = Array.isArray(data) ? data : []
+
   return {
-    projects: data || [],
+    projects,
     isLoading,
     publish: publishMutation.mutate,
     isPublishing: publishMutation.isPending,

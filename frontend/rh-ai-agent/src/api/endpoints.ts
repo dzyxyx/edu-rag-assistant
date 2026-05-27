@@ -2,6 +2,7 @@ import apiClient from './clients'
 import type {
   Company,
   CompanyFilters,
+  CompaniesResponse,
   Competency,
   CompetencyGap,
   OutreachCard,
@@ -20,27 +21,35 @@ import type {
 } from './types'
 
 export const companiesApi = {
-  list: (filters: CompanyFilters) =>
-    apiClient.get<PaginatedResponse<Company>>('/companies', { params: filters }),
+  // Список компаний с фильтрацией
+  list: (filters?: CompanyFilters) =>
+    apiClient.get<CompaniesResponse>('/companies', { params: filters }),
 
+  // Получить компанию по ID
   getById: (companyId: number) =>
     apiClient.get<Company>(`/companies/${companyId}`),
 
+  // Создать компанию
   create: (data: Partial<Company>) =>
     apiClient.post<Company>('/companies', data),
 
-  update: (id: number, data: Partial<Company>) =>
-    apiClient.patch<Company>(`/companies/${id}`, data),
+  // Обновить компанию
+  update: (companyId: number, data: Partial<Company>) =>
+    apiClient.patch<Company>(`/companies/${companyId}`, data),
 
-  delete: (id: number) =>
-    apiClient.delete(`/companies/${id}`),
+  // Удалить компанию
+  delete: (companyId: number) =>
+    apiClient.delete(`/companies/${companyId}`),
 
+  // Скоринг компаний
   score: (companyIds: number[]) =>
     apiClient.post<{ task_id: string }>('/companies/score', { company_ids: companyIds }),
 
+  // Верификация компаний
   verify: (companyIds: number[]) =>
     apiClient.post<{ task_id: string }>('/companies/verify', { company_ids: companyIds }),
 
+  // Экспорт компаний
   export: (filters?: CompanyFilters) =>
     apiClient.get<Blob>('/companies/export', { 
       params: filters,

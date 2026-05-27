@@ -14,7 +14,7 @@ export default function Communications() {
   const { t, i18n } = useTranslation()
   const locale = i18n.language
   const { addToast } = useAppStore()
-  
+   const { ui, locale: storeLocale, setLocale, agentConfig } = useAppStore()
   // Используем хук для получения данных из API
   const { 
     cards, 

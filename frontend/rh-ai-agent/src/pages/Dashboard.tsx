@@ -5,6 +5,7 @@ import { TrendingUp, Users, Mail, Calendar, FolderOpen, Activity, Download, Arro
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { useTranslation } from 'react-i18next'
 import { exportCompaniesReport } from '@/lib/export'
+import { Button } from '@/components/ui/Button'
 
 export default function Dashboard() {
   const { t, i18n } = useTranslation()

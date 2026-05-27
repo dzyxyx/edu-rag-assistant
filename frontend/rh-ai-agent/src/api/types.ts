@@ -9,21 +9,22 @@ export interface BaseEntity {
 export interface Company {
   id: number
   name: string
-  inn?: string
-  website?: string
-  description?: string
-  industry?: string
-  region?: string
-  employee_count?: number
-  email?: string
+  inn: string
+  website: string
+  description: string
+  industry: string
+  region: string
+  employee_count: number
+  email: string
   score: number
-  score_tech_stack?: number
-  score_scale?: number
-  score_reputation?: number
-  score_edu_experience?: number
+  score_tech_stack: number
+  score_scale: number
+  score_reputation: number
+  score_edu_experience: number
   status: string
-  source?: string
+  source: string
   created_at: string
+  updated_at?: string
 }
 
 export interface CompanyFilters {
@@ -33,7 +34,11 @@ export interface CompanyFilters {
   search?: string
   industry?: string
   region?: string
-  min_score?: number
+}
+
+export interface CompaniesResponse {
+  total: number
+  items: Company[]
 }
 
 // Competency
