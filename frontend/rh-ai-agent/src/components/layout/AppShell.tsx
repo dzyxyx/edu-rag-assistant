@@ -13,6 +13,8 @@ import { useState } from 'react'
 import { NotificationDropdown } from '@/components/ui/NotificationDropdown'
 import { MiniAppBridge } from '@/lib/mini-app-bridge'
 import { useAuth } from '@/hooks/useAuth'
+import { ChatButton } from '@/components/ui/ChatButton'
+import { ChatWindow } from '@/components/ui/ChatWindow'
 
 const NAV_ITEMS = [
   { icon: LayoutDashboard, key: 'nav.dashboard', path: '/' },
@@ -30,7 +32,7 @@ export function AppShell() {
   const { i18n, t } = useTranslation()
   const location = useLocation()
   const [isNotifOpen, setIsNotifOpen] = useState(false)
-  
+  const [isChatOpen, setIsChatOpen] = useState(false)
   const { logout } = useAuth()
 
   const handleLanguageToggle = () => {
@@ -111,9 +113,9 @@ export function AppShell() {
             <Menu size={20} />
           </button>
           
-          {/* 🔥 Убрали блок с инициалами и email */}
+          {/* Пустой блок (убрали инициалы) */}
           <div className="hidden md:flex items-center gap-2 text-sm text-text-secondary">
-            {/* Пусто - убрали отображение имени пользователя */}
+            {/* Пусто */}
           </div>
 
           <div className="flex items-center gap-3">
@@ -134,9 +136,8 @@ export function AppShell() {
               <NotificationDropdown isOpen={isNotifOpen} onClose={() => setIsNotifOpen(false)} />
             </div>
             
-            <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-xs font-bold ml-2">
-              AI
-            </div>
+            {/* 🔥 Кнопка чата с ИИ */}
+            <ChatButton onClick={() => setIsChatOpen(true)} />
           </div>
         </header>
 
@@ -144,6 +145,9 @@ export function AppShell() {
           <Outlet />
         </main>
       </div>
+      
+      {/* 🔥 Окно чата с ИИ */}
+      <ChatWindow isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
     </div>
   )
 }
