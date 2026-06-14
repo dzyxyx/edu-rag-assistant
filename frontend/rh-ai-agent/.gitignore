@@ -1,0 +1,78 @@
+# ================= ОС =================
+.DS_Store
+.DS_Store?
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# ================= IDE / Редакторы =================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.classpath
+
+# ================= Секреты и окружение =================
+.env
+.env.local
+.env.*.local
+!.env.example
+*.pem
+*.key
+*.secret
+
+# ================= Python / Backend =================
+__pycache__/
+*.py[cod]
+*$.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv/
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+.tox/
+.nox/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+.ruff_cache/
+
+# ================= Node / Frontend (Vite + React) =================
+node_modules/
+.pnp
+.pnp.js
+dist/
+.vite/
+.eslintcache
+.stylelintcache
+node_modules
+# ================= Docker / Инфраструктура =================
+# Локальные тома данных (если создаются в корне)
+postgres_data/
+redis_data/
+chroma_data/
+docker-compose.override.yml
+
+# ================= Логи и временные файлы =================
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.temp/
+tmp/
+temp/
+
+# ================= Сборка / Дистрибутивы =================
+build/
+sdist/
+*.egg-info/
+.eggs/
