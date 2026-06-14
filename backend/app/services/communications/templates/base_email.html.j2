@@ -1,0 +1,31 @@
+{# Sprint 5 (FR-5.*): базовый HTML-шаблон письма. Конкретные типы коммуникаций
+   могут переопределить блоки greeting/footer, но в большинстве случаев
+   достаточно передать subject/body — остальное оформление общее. #}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <title>{{ subject }}</title>
+</head>
+<body style="font-family: Arial, sans-serif; color: #222; line-height: 1.5;">
+    <div style="max-width: 640px; margin: 0 auto; padding: 16px;">
+        {% block greeting %}
+        {% if company_name %}
+        <p>Уважаемые коллеги из «{{ company_name }}»,</p>
+        {% endif %}
+        {% endblock %}
+
+        {% block body %}
+        <div style="white-space: pre-line;">{{ body }}</div>
+        {% endblock %}
+
+        {% block footer %}
+        <p style="margin-top: 24px; color: #555;">
+            С уважением,<br>
+            Отдел по работе с работодателями УрФУ<br>
+            <a href="mailto:{{ from_email or 'edagent@urfu.ru' }}">{{ from_email or 'edagent@urfu.ru' }}</a>
+        </p>
+        {% endblock %}
+    </div>
+</body>
+</html>

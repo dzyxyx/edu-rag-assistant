@@ -1,0 +1,18 @@
+{# Внутренние уведомления (human-in-the-loop, FR-9.*) — без обращения к компании
+   и без подписи отдела по работе с работодателями. #}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <title>{{ subject }}</title>
+</head>
+<body style="font-family: Arial, sans-serif; color: #222; line-height: 1.5;">
+    <div style="max-width: 640px; margin: 0 auto; padding: 16px;">
+        <h3 style="margin: 0 0 8px;">{{ subject }}</h3>
+        <div style="white-space: pre-line;">{{ body }}</div>
+        {% if recipient_role %}
+        <p style="margin-top: 16px; color: #888; font-size: 12px;">Адресат: {{ recipient_role }}</p>
+        {% endif %}
+    </div>
+</body>
+</html>

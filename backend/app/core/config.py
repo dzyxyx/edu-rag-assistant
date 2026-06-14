@@ -118,5 +118,18 @@ class Settings(BaseSettings):
     # Agent memory / outreach graph (Sprint 4)
     OUTREACH_CONFIDENCE_THRESHOLD: float = 0.6  # ниже — письмо уходит на ESCALATED
 
+    # План касаний (FR-3.6, Sprint 5): интервалы (в днях) между касаниями
+    # компании-партнёра — после первичного письма (outreach) и после каждого
+    # follow-up. Длина списка определяет максимальное число follow-up'ов.
+    OUTREACH_TOUCH_PLAN_DAYS: list[int] = [5, 14]
+
+    # Скоринг компаний (Sprint 4 — FR-2.3/FR-2.4)
+    # Порог итогового score, при котором компания автоматически переводится
+    # в статус "shortlisted" (если её текущий статус ещё не дальше по пайплайну).
+    AUTO_SHORTLIST_SCORE_THRESHOLD: float = 0.7
+    # Бонус к score за совпадение industry компании с утверждённой
+    # приоритетной областью (PriorityArea.status == approved).
+    PRIORITY_AREA_SCORE_BONUS: float = 0.05
+
 
 settings = Settings()

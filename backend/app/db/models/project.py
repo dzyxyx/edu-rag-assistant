@@ -8,7 +8,11 @@ from app.db.base import Base
 
 class ProjectStatus(StrEnum):
     DRAFT = "draft"
+    # S7-3: проект предложен компании-партнёру и ожидает согласования ТЗ.
+    PROPOSED = "proposed"
     PUBLISHED = "published"
+    # S7-3: ТЗ и роли утверждены — идёт набор студенческой команды (role slots).
+    RECRUITING = "recruiting"
     IN_PROGRESS = "in_progress"
     COMPLETED = "completed"
     ARCHIVED = "archived"
@@ -42,6 +46,13 @@ class Project(Base):
 
     # Интеграция с ПроКомпетенции (FR-5.4)
     procompetency_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
+
+    # S7-3: основная компетенция, на развитие которой направлен проект —
+    # ссылка на словарь компетенций (app.db.models.competency.Competency),
+    # используется для подбора студентов и аналитики покрытия компетенций.
+    project_competency_id: Mapped[int | None] = mapped_column(
+        ForeignKey("competencies.id"), nullable=True
+    )
 
     def __repr__(self) -> str:
         return f"<Project id={self.id} title={self.title} status={self.status}>"

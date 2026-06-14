@@ -20,6 +20,7 @@ from app.services.memory.audit import log_action
 from app.services.memory.memory_service import MemoryService
 from app.services.outreach.memory_graph import run_outreach_graph
 from app.services.outreach.sender import send_email
+from app.services.outreach.touch_plan import next_touch_after_days
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -245,6 +246,9 @@ async def send_event(
         body=event.body or "",
     )
     new_status = OutreachStatus.SENT if ok else OutreachStatus.DRAFT
-    event = await repo.update_status(event_id, new_status)
+    # FR-3.6: при успешной отправке планируем следующее касание (follow-up)
+    # согласно плану касаний (OUTREACH_TOUCH_PLAN_DAYS).
+    next_days = next_touch_after_days(event.follow_up_number) if ok else event.next_follow_up_after_days
+    event = await repo.update_status(event_id, new_status, next_follow_up_after_days=next_days)
     await db.commit()
     return event

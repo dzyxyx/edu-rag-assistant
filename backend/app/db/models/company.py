@@ -25,6 +25,9 @@ class Company(Base):
 
     # Базовая информация
     name: Mapped[str] = mapped_column(String(500), nullable=False)
+    # Нормализованное название (без ООО/АО/кавычек/пунктуации, lower) —
+    # используется для дедупликации между источниками (Sprint 1, FR-1.4).
+    normalized_name: Mapped[str | None] = mapped_column(String(500), nullable=True, index=True)
     inn: Mapped[str | None] = mapped_column(String(12), unique=True, nullable=True, index=True)
     website: Mapped[str | None] = mapped_column(String(500), nullable=True)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -43,6 +46,7 @@ class Company(Base):
     score_scale: Mapped[float | None] = mapped_column(Float, nullable=True)
     score_reputation: Mapped[float | None] = mapped_column(Float, nullable=True)
     score_edu_experience: Mapped[float | None] = mapped_column(Float, nullable=True)
+    score_vacancy_activity: Mapped[float | None] = mapped_column(Float, nullable=True)
 
     # Статус пайплайна
     status: Mapped[str] = mapped_column(String(50), default=CompanyStatus.RAW, nullable=False)
@@ -55,3 +59,4 @@ class Company(Base):
 
     def __repr__(self) -> str:
         return f"<Company id={self.id} name={self.name} score={self.score}>"
+

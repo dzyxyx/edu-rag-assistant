@@ -178,7 +178,7 @@ async def test_notifications_list_and_mark_read(auth_client, db_session):
     n = await notif_repo.create(
         type=NotificationType.GENERAL,
         title="Проверка API уведомлений",
-        recipient_role="менеджер по партнёрствам",
+        recipient_role=None,  # общее уведомление — видно всем ролям (S9-7)
     )
     await db_session.commit()
 

@@ -3,6 +3,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models.outreach import OutreachCampaign, OutreachEvent, OutreachStatus
 
+_UNSET = object()
+
 
 class OutreachRepository:
     def __init__(self, session: AsyncSession):
@@ -86,11 +88,13 @@ class OutreachRepository:
         return list(result.scalars().all())
 
     async def update_status(
-        self, event_id: int, status: str
+        self, event_id: int, status: str, next_follow_up_after_days: int | None = _UNSET
     ) -> OutreachEvent | None:
         obj = await self.get_event(event_id)
         if obj:
             obj.status = status
+            if next_follow_up_after_days is not _UNSET:
+                obj.next_follow_up_after_days = next_follow_up_after_days
             await self._s.flush()
         return obj
 

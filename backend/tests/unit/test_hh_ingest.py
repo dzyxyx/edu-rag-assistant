@@ -108,6 +108,27 @@ async def test_ingest_upsert_no_duplicates(mock_hh_client, db_session):
 
 
 @pytest.mark.asyncio(loop_scope="session")
+async def test_ingest_writes_ingest_log(mock_hh_client, db_session):
+    """После _ingest() создаётся запись IngestLog со статусом success и счётчиками (Sprint 1)."""
+    from app.db.repositories.ingest_log import IngestLogRepository
+    from app.db.models.ingest_log import IngestLogStatus
+
+    with patch("app.workers.tasks.hh_ingest.AsyncSessionFactory") as mock_factory:
+        mock_factory.return_value.__aenter__ = AsyncMock(return_value=db_session)
+        mock_factory.return_value.__aexit__ = AsyncMock(return_value=False)
+        await _ingest()
+
+    log_repo = IngestLogRepository(db_session)
+    log = await log_repo.get_latest(source="hh")
+    assert log is not None
+    assert log.status == IngestLogStatus.SUCCESS
+    # Компании из MOCK_EMPLOYERS могут быть уже созданы предыдущими тестами
+    # (общая session-scoped БД) — тогда они просто обновляются.
+    assert log.companies_created + log.companies_updated >= len(MOCK_EMPLOYERS)
+    assert log.finished_at is not None
+
+
+@pytest.mark.asyncio(loop_scope="session")
 async def test_ingest_calls_hh_with_keywords(mock_hh_client, db_session):
     """HH клиент вызывается с правильными ключевыми словами."""
     with patch("app.workers.tasks.hh_ingest.AsyncSessionFactory") as mock_factory:

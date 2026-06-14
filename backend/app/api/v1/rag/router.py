@@ -2,13 +2,14 @@ import asyncio
 import json
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException, Query, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, WebSocket, WebSocketDisconnect
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.v1.rag.schemas import ChatRequest, ChatResponse, MessageOut, SessionOut
 from app.core.config import settings
 from app.core.dependencies import get_current_active_user
+from app.core.limiter import limiter, rate_limit_string
 from app.core.security import decode_token
 from app.db.models.chat import ChatMessage, ChatSession
 from app.db.models.user import User
@@ -57,7 +58,9 @@ async def _retrieve_sources(question: str) -> list[str]:
 # ── POST /rag/chat ─────────────────────────────────────────────────────────────
 
 @router.post("/chat", response_model=ChatResponse)
+@limiter.limit(rate_limit_string)
 async def chat(
+    request: Request,
     req: ChatRequest,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),

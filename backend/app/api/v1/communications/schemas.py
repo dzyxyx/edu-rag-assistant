@@ -24,11 +24,22 @@ class CommunicationGenerateRequest(BaseModel):
         default=True,
         description="Учитывать долгосрочную память агента по компании (FR-6.3).",
     )
+    render_html: bool = Field(
+        default=False,
+        description="Дополнительно вернуть HTML-версию письма, оформленную "
+        "по Jinja2-шаблону (FR-5.*) — для предпросмотра/отправки.",
+    )
 
     # Доп. параметры конкретных типов (см. generate_communication)
     previous_subject: str | None = None
     follow_up_number: int = 1
     reason: str | None = None
+    project_id: int | None = Field(
+        default=None,
+        description="Для type='project_invitation' (Sprint 7): id проекта. "
+        "Если указан — title/technical_spec проекта используются вместо "
+        "project_name/project_description.",
+    )
     project_name: str | None = None
     project_description: str | None = None
     recipient_role: str | None = None
@@ -42,3 +53,4 @@ class CommunicationGenerateResponse(BaseModel):
     subject: str
     body: str
     memory_used_count: int = 0
+    rendered_html: str | None = None

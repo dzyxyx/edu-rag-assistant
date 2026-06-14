@@ -13,6 +13,8 @@ class NotificationType(StrEnum):
     OUTREACH_ESCALATED = "outreach_escalated"           # письмо эскалировано из-за низкой уверенности (FR-4.6)
     OUTREACH_DRAFT_REVIEW = "outreach_draft_review"     # обычный черновик, ожидающий утверждения (FR-3.5)
     GENERAL = "general"                                  # произвольное уведомление (см. communications.notification)
+    SHORTLIST_TOP20_READY = "shortlist_top20_ready"     # набралось >= 20 компаний в шортлисте (FR-2.5)
+    INGEST_ERRORS = "ingest_errors"                     # сбор/импорт компаний завершился с ошибками
 
 
 class Notification(Base):
