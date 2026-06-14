@@ -10,6 +10,7 @@ celery_app = Celery(
         "app.workers.tasks.hh_ingest",
         "app.workers.tasks.rag_ingest",
         "app.workers.tasks.outreach",
+        "app.workers.tasks.nlp_process",
     ],
 )
 
@@ -36,6 +37,11 @@ celery_app.conf.beat_schedule = {
     "outreach-follow-ups": {
         "task": "app.workers.tasks.outreach.check_follow_ups",
         "schedule": 60 * 60 * 12,
+        "options": {"queue": "default"},
+    },
+    "nlp-process-nightly": {
+        "task": "app.workers.tasks.nlp_process.run_nlp_process",
+        "schedule": 60 * 60 * 24,
         "options": {"queue": "default"},
     },
 }

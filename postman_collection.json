@@ -1,0 +1,531 @@
+{
+  "info": {
+    "name": "EduRAG Assistant — API проверка (Sprint 0-3)",
+    "_postman_id": "edu-rag-assistant-verification",
+    "description": "Коллекция для ручной проверки backend. Перед использованием: поднять docker-compose, в .env установить MOCK_LLM=true, выполнить alembic upgrade head.\n\nПорядок запуска: 1) Register -> 2) Login (сохранит access_token в переменную коллекции) -> остальные запросы используют {{access_token}} автоматически.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:8000/api/v1" },
+    { "key": "access_token", "value": "" },
+    { "key": "session_id", "value": "" },
+    { "key": "company_id", "value": "" },
+    { "key": "priority_area_id", "value": "" },
+    { "key": "test_email", "value": "tester@example.com" },
+    { "key": "test_password", "value": "secret123" }
+  ],
+  "item": [
+    {
+      "name": "1. Auth",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base_url}}/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{test_email}}\",\n  \"full_name\": \"Test User\",\n  \"password\": \"{{test_password}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('201 Created (или 400 если уже существует)', function () {",
+                  "    pm.expect([200, 201, 400]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base_url}}/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{test_email}}\",\n  \"password\": \"{{test_password}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "const data = pm.response.json();",
+                  "pm.test('access_token присутствует', function () {",
+                  "    pm.expect(data).to.have.property('access_token');",
+                  "});",
+                  "pm.collectionVariables.set('access_token', data.access_token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Me",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": "{{base_url}}/auth/me"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('email совпадает', function () {",
+                  "    pm.expect(pm.response.json().email).to.eql(pm.collectionVariables.get('test_email'));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2. RAG Chat (Sprint 3)",
+      "item": [
+        {
+          "name": "Chat - новая сессия (общий вопрос)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "url": "{{base_url}}/rag/chat",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"question\": \"Что такое Scrum?\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "const data = pm.response.json();",
+                  "pm.test('ответ содержит answer/session_id/message_id', function () {",
+                  "    pm.expect(data).to.have.property('answer');",
+                  "    pm.expect(data).to.have.property('session_id');",
+                  "    pm.expect(data).to.have.property('message_id');",
+                  "});",
+                  "pm.test('sources пустой при MOCK_LLM=true', function () {",
+                  "    pm.expect(data.sources).to.eql([]);",
+                  "});",
+                  "pm.collectionVariables.set('session_id', data.session_id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Chat - продолжение той же сессии",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "url": "{{base_url}}/rag/chat",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"question\": \"А что дальше?\",\n  \"session_id\": {{session_id}}\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "const data = pm.response.json();",
+                  "pm.test('session_id не изменился', function () {",
+                  "    pm.expect(data.session_id).to.eql(parseInt(pm.collectionVariables.get('session_id')));",
+                  "});",
+                  "pm.test('ответ упоминает историю (мок)', function () {",
+                  "    pm.expect(data.answer.toLowerCase()).to.include('истори');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Chat - вопрос про рынок труда (market_context)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "url": "{{base_url}}/rag/chat",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"question\": \"Какие компетенции сейчас востребованы на рынке труда?\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('ответ упоминает аналитику рынка труда', function () {",
+                  "    pm.expect(pm.response.json().answer.toLowerCase()).to.include('рынка труда');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Chat - без токена (ожидаем 401)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base_url}}/rag/chat",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"question\": \"Привет\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('401 Unauthorized', function () { pm.response.to.have.status(401); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Chat - несуществующая сессия (ожидаем 404)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "url": "{{base_url}}/rag/chat",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"question\": \"Привет\",\n  \"session_id\": 999999\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('404 Not Found', function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Список сессий",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": "{{base_url}}/rag/sessions"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "const data = pm.response.json();",
+                  "pm.test('есть total и items с title', function () {",
+                  "    pm.expect(data).to.have.property('total');",
+                  "    pm.expect(data.items.length).to.be.above(0);",
+                  "    pm.expect(data.items[0]).to.have.property('title');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Сообщения сессии",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": "{{base_url}}/rag/sessions/{{session_id}}/messages"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "const items = pm.response.json().items;",
+                  "pm.test('минимум 4 сообщения (2 вопроса + 2 ответа)', function () {",
+                  "    pm.expect(items.length).to.be.at.least(4);",
+                  "});",
+                  "pm.test('первое сообщение от пользователя', function () {",
+                  "    pm.expect(items[0].role).to.eql('user');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3. Companies (Sprint 1)",
+      "item": [
+        {
+          "name": "Список компаний",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": {
+              "raw": "{{base_url}}/companies?limit=20&offset=0",
+              "host": ["{{base_url}}"],
+              "path": ["companies"],
+              "query": [
+                { "key": "limit", "value": "20" },
+                { "key": "offset", "value": "0" }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "const data = pm.response.json();",
+                  "pm.test('структура items/total', function () {",
+                  "    pm.expect(data).to.have.property('total');",
+                  "    pm.expect(data).to.have.property('items');",
+                  "});",
+                  "if (data.items.length > 0) {",
+                  "    pm.collectionVariables.set('company_id', data.items[0].id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Карточка компании",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": "{{base_url}}/companies/{{company_id}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK или 404 (если company_id пуст)', function () {",
+                  "    pm.expect([200, 404]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Пересчёт скоринга компании",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": "{{base_url}}/companies/{{company_id}}/score"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK или 404 (если company_id пуст)', function () {",
+                  "    pm.expect([200, 404]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Изменить статус компании",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "url": "{{base_url}}/companies/{{company_id}}/status",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"contacted\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK или 404/422', function () {",
+                  "    pm.expect([200, 404, 422]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "4. Industry / Priority Areas (Sprint 2)",
+      "item": [
+        {
+          "name": "Компетенции",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": {
+              "raw": "{{base_url}}/industry/competencies?limit=50",
+              "host": ["{{base_url}}"],
+              "path": ["industry", "competencies"],
+              "query": [{ "key": "limit", "value": "50" }]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('структура total/items', function () {",
+                  "    const data = pm.response.json();",
+                  "    pm.expect(data).to.have.property('total');",
+                  "    pm.expect(data).to.have.property('items');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Матрица компетенций по отраслям",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": "{{base_url}}/industry/matrix"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Запустить NLP-анализ (analyze)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": {
+              "raw": "{{base_url}}/industry/analyze?batch_size=50",
+              "host": ["{{base_url}}"],
+              "path": ["industry", "analyze"],
+              "query": [{ "key": "batch_size", "value": "50" }]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('возвращает статистику обработки', function () {",
+                  "    const data = pm.response.json();",
+                  "    pm.expect(data).to.have.property('processed_vacancies');",
+                  "    pm.expect(data).to.have.property('competencies_found');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Приоритетные области (proposed)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": {
+              "raw": "{{base_url}}/industry/priority-areas?status=proposed",
+              "host": ["{{base_url}}"],
+              "path": ["industry", "priority-areas"],
+              "query": [{ "key": "status", "value": "proposed" }]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "const data = pm.response.json();",
+                  "if (data.items && data.items.length > 0) {",
+                  "    pm.collectionVariables.set('priority_area_id', data.items[0].id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Утвердить приоритетную область",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "url": "{{base_url}}/industry/priority-areas/{{priority_area_id}}/review",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"approved\",\n  \"comment\": \"Проверено вручную через Postman\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK или 404 (если priority_area_id пуст)', function () {",
+                  "    pm.expect([200, 404, 422]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,4 +1,4 @@
-from sqlalchemy import select, update
+from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models.company import Company, CompanyStatus
@@ -38,6 +38,13 @@ class CompanyRepository:
         q = q.limit(limit).offset(offset)
         result = await self.session.execute(q)
         return list(result.scalars().all())
+
+    async def count(self, status: str | None = None) -> int:
+        q = select(func.count()).select_from(Company)
+        if status:
+            q = q.where(Company.status == status)
+        result = await self.session.execute(q)
+        return result.scalar_one()
 
     async def create(self, **kwargs) -> Company:
         company = Company(**kwargs)

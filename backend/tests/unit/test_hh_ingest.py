@@ -49,6 +49,7 @@ def mock_hh_client():
     ) as MockHHClient:
         instance = MockHHClient.return_value.__aenter__.return_value
         instance.collect_companies = AsyncMock(return_value=MOCK_EMPLOYERS)
+        instance.collect = AsyncMock(return_value=(MOCK_EMPLOYERS, []))
         yield instance
 
 
@@ -114,7 +115,7 @@ async def test_ingest_calls_hh_with_keywords(mock_hh_client, db_session):
         mock_factory.return_value.__aexit__ = AsyncMock(return_value=False)
         await _ingest()
 
-    mock_hh_client.collect_companies.assert_called_once_with(keywords=HH_KEYWORDS)
+    mock_hh_client.collect.assert_called_once_with(keywords=HH_KEYWORDS)
 
 
 # ── Sync тесты HHEmployer schema ─────────────────────────────────────────────

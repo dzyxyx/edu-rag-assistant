@@ -26,7 +26,8 @@ async def list_companies(
     # Support both ?offset=X and ?page=N (page takes priority if both provided)
     effective_offset = (page - 1) * limit if page is not None else offset
     items = await repo.list(status=status, limit=limit, offset=effective_offset)
-    return CompanyListResponse(total=len(items), items=items)
+    total = await repo.count(status=status)
+    return CompanyListResponse(total=total, items=items)
 
 
 @router.get("/{company_id}", response_model=CompanyOut)
