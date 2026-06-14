@@ -6,6 +6,10 @@ import type {
   CompaniesResponse,
   CompanyStatusUpdate,
   CompanyScoreRequest,
+  CompanyCreate,
+  CompanyImportRequest,
+  CompanyImportResponse,
+  IngestLogsResponse,
   // Competency
   Competency,
   CompetencyGap,
@@ -54,7 +58,7 @@ export const companiesApi = {
   getById: (companyId: number) =>
     apiClient.get<Company>(`/companies/${companyId}`),
 
-  create: (data: Partial<Company>) =>
+  create: (data: CompanyCreate) =>
     apiClient.post<Company>('/companies', data),
 
   update: (companyId: number, data: Partial<Company>) =>
@@ -63,19 +67,15 @@ export const companiesApi = {
   delete: (companyId: number) =>
     apiClient.delete(`/companies/${companyId}`),
 
-  // 🔥 Смена статуса компании (используется для верификации)
   updateStatus: (companyId: number, data: CompanyStatusUpdate) =>
     apiClient.patch<Company>(`/companies/${companyId}/status`, data),
 
-  // 🔥 Пересчёт скоринга ОДНОЙ компании (возвращает обновлённую компанию)
   rescoreCompany: (companyId: number) =>
     apiClient.post<Company>(`/companies/${companyId}/score`),
 
-  // 🔥 История скоринга
   getScoreHistory: (companyId: number, params?: { limit?: number; offset?: number }) =>
     apiClient.get<ScoreHistoryResponse>(`/companies/${companyId}/score-history`, { params }),
 
-  // 🔥 Bulk-верификация (через PATCH статуса для каждой)
   verify: (companyIds: number[]) =>
     Promise.all(
       companyIds.map(id =>
@@ -83,7 +83,6 @@ export const companiesApi = {
       )
     ),
 
-  // 🔥 Bulk-скоринг (последовательно для каждой компании)
   rescoreCompanies: (companyIds: number[]) =>
     Promise.all(
       companyIds.map(id =>
@@ -97,14 +96,9 @@ export const companiesApi = {
       responseType: 'blob',
     }),
   
-  create: (data: CompanyCreate) =>
-    apiClient.post<Company>('/companies', data),
-
-  // 🔥 Массовый импорт
   import: (data: CompanyImportRequest) =>
     apiClient.post<CompanyImportResponse>('/companies/import', data),
 
-  // 🔥 История запусков сбора данных
   getIngestLogs: (params?: { source?: string; limit?: number; offset?: number }) =>
     apiClient.get<IngestLogsResponse>('/companies/ingest-logs', { params }),
 }
@@ -162,43 +156,33 @@ export const outreachApi = {
 
 // ==================== PROJECTS ====================
 export const projectsApi = {
-  // Список проектов с фильтрами
   list: (filters?: ProjectsFilters) =>
     apiClient.get<ProjectsResponse>('/projects', { params: filters }),
 
-  // Создать проект (черновик)
   create: (data: ProjectCreate) =>
     apiClient.post<Project>('/projects', data),
 
-  // Получить проект по ID
   getById: (projectId: number) =>
     apiClient.get<Project>(`/projects/${projectId}`),
 
-  // Обновить проект
   update: (projectId: number, data: ProjectUpdate) =>
     apiClient.patch<Project>(`/projects/${projectId}`, data),
 
-  // Удалить проект
   delete: (projectId: number) =>
     apiClient.delete(`/projects/${projectId}`),
 
-  // Сменить статус проекта
   updateStatus: (projectId: number, data: ProjectStatusUpdate) =>
     apiClient.patch<Project>(`/projects/${projectId}/status`, data),
 
-  // (Пере)генерировать ТЗ
   generateSpec: (projectId: number, data: GenerateSpecRequest) =>
     apiClient.post<GenerateSpecResponse>(`/projects/${projectId}/generate-spec`, data),
 
-  // Получить роли проекта
   getRoles: (projectId: number) =>
     apiClient.get<RoleSlotsResponse>(`/projects/${projectId}/roles`),
 
-  // Добавить роль
   addRole: (projectId: number, data: RoleSlotCreate) =>
     apiClient.post<RoleSlot>(`/projects/${projectId}/roles`, data),
 
-  // Назначить студента на роль
   assignRole: (projectId: number, slotId: number, data: RoleSlotAssign) =>
     apiClient.post<RoleSlot>(`/projects/${projectId}/roles/${slotId}/assign`, data),
 }
@@ -235,30 +219,24 @@ export const vacanciesApi = {
 
 // ==================== DASHBOARD ====================
 export const dashboardApi = {
-  // Сводные метрики
   stats: () =>
     apiClient.get<DashboardStats>('/dashboard/stats'),
 
-  // Очередь human-in-the-loop
   pendingReview: () =>
     apiClient.get<PendingReviewResponse>('/dashboard/pending-review'),
 
-  // Активность (если ещё используется)
   activities: (limit = 20) =>
     apiClient.get<ActivityLog[]>(`/dashboard/activities?limit=${limit}`),
 }
 
 // ==================== NOTIFICATIONS ====================
 export const notificationsApi = {
-  // Список уведомлений
   list: (params?: { unread_only?: boolean; limit?: number; offset?: number }) =>
     apiClient.get<NotificationsResponse>('/notifications', { params }),
 
-  // Отметить как прочитанное
   markAsRead: (id: number) =>
     apiClient.post<{ status: string; notification: Notification }>(`/notifications/${id}/read`),
 
-  // Отметить все как прочитанные
   markAllRead: () =>
     apiClient.post<{ status: string; notification: null }>('/notifications/read-all'),
 }
@@ -318,7 +296,6 @@ export const chatApi = {
 
 // ==================== INDUSTRY ANALYTICS ====================
 export const industryApi = {
-  //  GET /industry/competencies - список компетенций
   getCompetencies: (params?: { 
     source?: 'industry' | 'program',
     category?: 'hard_skill' | 'tool' | 'soft_skill' | 'methodology',
@@ -326,11 +303,9 @@ export const industryApi = {
   }) =>
     apiClient.get<PaginatedResponse<CompetencyItem>>('/industry/competencies', { params }),
 
-  //  GET /industry/matrix - матрица компетенций по отраслям
   getMatrix: () =>
     apiClient.get<PaginatedResponse<IndustryMatrixItem>>('/industry/matrix'),
 
-  //  POST /industry/analyze - запуск анализа
   analyze: (batchSize: number = 200) =>
     apiClient.post<{ 
       processed_vacancies: number
@@ -338,13 +313,11 @@ export const industryApi = {
       priority_area_industries: number
     }>(`/industry/analyze?batch_size=${batchSize}`),
 
-  // GET /industry/priority-areas - список приоритетных областей
   getPriorityAreas: (status?: 'proposed' | 'approved' | 'rejected') =>
     apiClient.get<PaginatedResponse<PriorityArea>>('/industry/priority-areas', {
       params: status ? { status } : undefined,
     }),
 
-  //  POST /industry/priority-areas/{area_id}/review - модерация
   reviewPriorityArea: (areaId: number, data: PriorityAreaReview) =>
     apiClient.post<PriorityArea>(`/industry/priority-areas/${areaId}/review`, data),
 }
@@ -356,7 +329,6 @@ export const communicationsApi = {
   generate: (data: CommunicationGenerateRequest) =>
     apiClient.post<CommunicationGenerateResponse>('/communications/generate', {
       ...data,
-      // 🔥 Если type === 'project_invitation' и есть project_id — удаляем старые поля
       ...(data.type === 'project_invitation' && data.project_id
         ? { project_id: data.project_id, project_name: undefined, project_description: undefined }
         : {}),

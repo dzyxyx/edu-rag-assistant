@@ -59,7 +59,6 @@ export default function Memory() {
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
   const animationRef = useRef<number>()
 
-  // 🔥 Безопасная работа с данными
   const safeNodes = apiNodes || []
 
   const initializeNodes = (): { nodes: Node[]; links: Link[] } => {
@@ -67,7 +66,6 @@ export default function Memory() {
     const links: Link[] = []
     const addedIds = new Set<string>()
 
-    // 🔥 Фильтрация с защитой от undefined
     const companies = safeNodes.filter(n => n?.type === 'company')
     const skills = safeNodes.filter(n => n?.type === 'skill')
     const competencies = safeNodes.filter(n => n?.type === 'competency')
@@ -103,7 +101,6 @@ export default function Memory() {
       addedIds.add(String(n.id))
     })
 
-    // 🔥 Безопасная обработка связей
     safeNodes.forEach(n => {
       const connections = n.connections || []
       connections.forEach(conn => {
@@ -168,7 +165,7 @@ export default function Memory() {
     if (!ctx) return
 
     const { nodes, links } = initializeNodes()
-    if (nodes.length === 0) return // 🔥 Не рисуем если нет данных
+    if (nodes.length === 0) return 
 
     simulateForce(nodes, links, 250)
 
@@ -250,7 +247,6 @@ export default function Memory() {
   const handleMouseMove = (e: React.MouseEvent) => { if (isDragging) setOffset({ x: e.clientX - dragStart.x, y: e.clientY - dragStart.y }) }
   const handleMouseUp = () => setIsDragging(false)
 
-  // 🔥 Безопасный расчёт статистики
   const stats = {
     companies: safeNodes.filter(n => n?.type === 'company').length,
     skills: safeNodes.filter(n => n?.type === 'skill').length,

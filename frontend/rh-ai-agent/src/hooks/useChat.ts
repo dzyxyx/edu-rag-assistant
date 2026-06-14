@@ -13,7 +13,6 @@ export function useChat() {
   const [progress, setProgress] = useState(0)
   const [displayMessages, setDisplayMessages] = useState<ChatMessage[]>([])
 
-  //  Загрузка истории при смене sessionId
   const { isLoading: isLoadingHistory } = useQuery({
     queryKey: ['chat', 'history', sessionId],
     queryFn: async () => {
@@ -77,12 +76,10 @@ export function useChat() {
     onSettled: () => { setIsTyping(false) }
   })
 
-  //  Переключение на существующую сессию
   const selectSession = useCallback((id: number) => {
     setSessionId(id)
   }, [])
 
-  //  Начало нового диалога
   const startNewChat = useCallback(() => {
     setSessionId(null)
     setDisplayMessages([])

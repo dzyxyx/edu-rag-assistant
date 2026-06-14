@@ -44,7 +44,6 @@ export default function Dashboard() {
     staleTime: 5 * 60 * 1000,
   })
 
-  //  График конверсии - последние 6 месяцев динамически
   const { data: monthlyData, isLoading: isLoadingOutreach } = useQuery({
     queryKey: ['dashboard', 'outreach-monthly'],
     queryFn: async () => {
@@ -53,7 +52,6 @@ export default function Dashboard() {
       const months = ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек']
       const now = new Date()
       
-      //  Генерируем последние 6 месяцев динамически
       const monthlyMap = new Map<string, { sent: number, replied: number }>()
       for (let i = 5; i >= 0; i--) {
         const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
@@ -61,7 +59,6 @@ export default function Dashboard() {
         monthlyMap.set(key, { sent: 0, replied: 0 })
       }
       
-      // Подсчитываем данные
       allOutreach.forEach(item => {
         const date = new Date(item.created_at)
         const key = `${date.getFullYear()}-${date.getMonth()}`
@@ -74,7 +71,6 @@ export default function Dashboard() {
         }
       })
       
-      // Преобразуем в формат графика
       return Array.from(monthlyMap.entries()).map(([key, data]) => {
         const monthIdx = parseInt(key.split('-')[1])
         const year = key.split('-')[0]
@@ -87,7 +83,7 @@ export default function Dashboard() {
         }
       })
     },
-    //  Мгновенное отображение "нет данных"
+
     placeholderData: [],
     staleTime: 5 * 60 * 1000,
   })

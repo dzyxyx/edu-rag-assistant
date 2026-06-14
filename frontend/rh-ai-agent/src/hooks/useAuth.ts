@@ -16,7 +16,6 @@ export function useAuth() {
       const response = await authApi.login(credentials)
       const data: TokenResponse = response.data
 
-      // 🔥 Сохраняем токен
       if (data.access_token) {
         localStorage.setItem('auth_token', data.access_token)
       }
@@ -27,7 +26,6 @@ export function useAuth() {
         token: data.access_token,
       })
 
-      // Загружаем профиль
       try {
         const profileResponse = await authApi.me()
         const userData: UserRead = profileResponse.data
@@ -57,29 +55,22 @@ export function useAuth() {
     }
   }
 
-  // 🔥 Мгновенный логаут: не ждём ответа от бэкенда
   const logout = async () => {
-    // 1. Немедленно очищаем локальную сессию
     localStorage.removeItem('auth_token')
     setAuth(null)
     setUser(null)
 
-    // 2. Отправляем запрос на бэкенд в фоне (не ждём ответа)
-    // 🔥 Используем AbortController для отмены запроса через 2 секунды
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), 2000)
 
     try {
-      // 🔥 Вызываем логаут с коротким таймаутом
       await authApi.logout()
     } catch (err) {
-      // 🔥 Игнорируем ошибки: пользователь уже вышел локально
       console.log('Logout request completed or timed out (ignored)')
     } finally {
       clearTimeout(timeoutId)
     }
 
-    // 3. Редирект на страницу входа (выполняется сразу)
     window.location.href = '/login'
   }
 

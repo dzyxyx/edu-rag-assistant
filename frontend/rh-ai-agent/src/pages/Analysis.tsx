@@ -17,7 +17,6 @@ export default function Analysis() {
   const { addToast } = useAppStore()
   const queryClient = useQueryClient()
   
-  // 🔥 Загрузка данных с placeholderData для мгновенного рендера
   const { data: competenciesData, isLoading: isLoadingCompetencies } = useQuery({
     queryKey: ['industry', 'competencies', { limit: 500 }],
     queryFn: () => industryApi.getCompetencies({ limit: 500 }).then(res => res.data),
@@ -32,23 +31,18 @@ export default function Analysis() {
     staleTime: 5 * 60 * 1000,
   })
 
-  // 🔥 Безопасное извлечение данных
   const competencies = competenciesData?.items || []
   const matrixItems = matrixData?.items || []
 
-  // 🔥 Подготовка данных для Radar Chart (Профиль компетенций)
   const radarData = useMemo(() => {
-    // Разделяем компетенции по источникам (пока только industry)
     const industryComps = competencies.filter(c => c?.source === 'industry')
     const programComps = competencies.filter(c => c?.source === 'program')
   
-    // Берём топ-6 по востребованности на рынке
     const topIndustry = industryComps
       .sort((a, b) => (b.demand_score || 0) - (a.demand_score || 0))
       .slice(0, 6)
   
     return topIndustry.map(indComp => {
-      // Ищем соответствующую компетенцию из программы (пока не реализовано)
       const progComp = programComps.find(pc => 
         pc?.name?.toLowerCase() === indComp?.name?.toLowerCase() &&
         pc?.category === indComp?.category
@@ -63,7 +57,6 @@ export default function Analysis() {
     })
   }, [competencies])
 
-  // 🔥 Подготовка данных для Gap Analysis
   const gapData = useMemo(() => {
     const industryComps = competencies.filter(c => c?.source === 'industry')
     const programComps = competencies.filter(c => c?.source === 'program')
@@ -90,7 +83,6 @@ export default function Analysis() {
     })
   }, [competencies])
 
-  // 🔥 Данные для таблицы (детализация по навыкам)
   const tableData = useMemo(() => {
     const industryComps = competencies.filter(c => c?.source === 'industry')
     const programComps = competencies.filter(c => c?.source === 'program')
@@ -107,7 +99,6 @@ export default function Analysis() {
         const marketDemand = Math.round((indComp?.demand_score || 0) * 100)
         const programCoverage = progComp ? Math.round((progComp.demand_score || 0) * 100) : 0
       
-        // Определяем тренд на основе frequency
         let trend: 'growing' | 'stable' | 'declining' = 'stable'
         if ((indComp?.frequency || 0) > 50) trend = 'growing'
         else if ((indComp?.frequency || 0) < 20) trend = 'declining'
@@ -124,10 +115,8 @@ export default function Analysis() {
       })
   }, [competencies])
 
-  // 🔥 Мутация для кнопки "Проверить выводы агента" (реальный вызов к бэкенду)
   const verifyInsightsMutation = useMutation({
     mutationFn: async () => {
-      // Реальный вызов к бэкенду - передаём индустрию и пустой массив навыков (пока)
       return competenciesApi.approveStrategy('IT', [])
     },
     onSuccess: () => {
@@ -161,8 +150,6 @@ export default function Analysis() {
     )
   }
 
-  // 🔥 Убрали блокирующий рендер при загрузке - страница рендерится мгновенно
-  // isLoadingCompetencies можно использовать для показа индикатора в отдельных элементах
 
   return (
     <div className="space-y-6 px-4 md:px-6 max-w-[1600px] mx-auto">

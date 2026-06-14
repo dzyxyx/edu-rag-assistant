@@ -12,8 +12,8 @@ export function useCompanies(filters: CompanyFilters = {}) {
     queryFn: () => companiesApi.list(filters).then(res => res.data),
     
     
-    staleTime: 5 * 60 * 1000, // 5 минут кэш
-    gcTime: 10 * 60 * 1000,   // 10 минут хранение в кэше
+    staleTime: 5 * 60 * 1000, 
+    gcTime: 10 * 60 * 1000,  
     refetchOnWindowFocus: false,
     retry: 1,
     
@@ -64,8 +64,8 @@ export function useCompanies(filters: CompanyFilters = {}) {
   return {
     companies: data?.items || [],
     total: data?.total || 0,
-    isLoading,        //  Первая загрузка
-    isFetching,       //  Любая загрузка (включая пагинацию)
+    isLoading,       
+    isFetching,     
     error,
     refetch,
     verifyCompanies: verifyMutation.mutate,

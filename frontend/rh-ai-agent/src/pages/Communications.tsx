@@ -51,7 +51,6 @@ export default function Communications() {
   const [selectedCard, setSelectedCard] = useState<OutreachCard | null>(null)
   const [isCardModalOpen, setIsCardModalOpen] = useState(false)
   
-  // Состояние для формы генерации
   const [isGenerateModalOpen, setIsGenerateModalOpen] = useState(false)
   const [selectedType, setSelectedType] = useState<string>('')
   const [companyId, setCompanyId] = useState<number | undefined>()
@@ -59,7 +58,6 @@ export default function Communications() {
   const [useMemory, setUseMemory] = useState(true)
   const [generatedResult, setGeneratedResult] = useState<CommunicationGenerateResponse | null>(null)
   
-  // Дополнительные поля
   const [previousSubject, setPreviousSubject] = useState('')
   const [followUpNumber, setFollowUpNumber] = useState(1)
   const [reason, setReason] = useState('')
@@ -68,7 +66,6 @@ export default function Communications() {
   const [recipientRole, setRecipientRole] = useState('')
   const [message, setMessage] = useState('')
 
-  // Загрузка данных
   const { data: cards, isLoading: isLoadingCards } = useQuery({
     queryKey: ['outreach', 'cards'],
     queryFn: () => outreachApi.list().then(res => res.data),
@@ -78,7 +75,7 @@ export default function Communications() {
 
   const { data: companiesData } = useQuery({
     queryKey: ['companies', 'list'],
-    queryFn: () => companiesApi.list({ limit: 100 }).then(res => res.data), // Было 200 → стало 100
+    queryFn: () => companiesApi.list({ limit: 100 }).then(res => res.data), 
     placeholderData: (previous) => previous || { items: [] },
     staleTime: 5 * 60 * 1000,
   })
@@ -87,7 +84,7 @@ export default function Communications() {
     queryKey: ['communications', 'types'],
     queryFn: () => communicationsApi.getTypes().then(res => res.data),
     placeholderData: (previous) => previous || { items: [] },
-    staleTime: 30 * 60 * 1000, // 30 минут - типы редко меняются
+    staleTime: 30 * 60 * 1000, 
   })
 
   const companiesList = companiesData?.items || []
@@ -111,7 +108,6 @@ export default function Communications() {
     })
   }
 
-  // Мутация для генерации
   const generateMutation = useMutation({
     mutationFn: async () => {
       if (!selectedType) throw new Error('Тип не выбран')

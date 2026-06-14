@@ -33,14 +33,12 @@ export default function Projects() {
   const { addToast } = useAppStore()
   const queryClient = useQueryClient()
 
-  // === STATE ===
   const [selectedProject, setSelectedProject] = useState<Project | null>(null)
   const [isTZModalOpen, setIsTZModalOpen] = useState(false)
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [isGeneratingTZ, setIsGeneratingTZ] = useState(false)
   const [tzGenerationTaskId, setTzGenerationTaskId] = useState<string | null>(null)
 
-  // === FORM STATE ===
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -50,7 +48,6 @@ export default function Projects() {
     generateSpec: false
   })
 
-  // === QUERIES ===
   const filters: ProjectsFilters = { limit: 100, offset: 0 }
   
   const { data: projectsData, isLoading: isLoadingProjects, refetch: refetchProjects } = useQuery({
@@ -65,12 +62,11 @@ export default function Projects() {
     staleTime: 5 * 60 * 1000,
   })
 
-  // 🔥 Детали проекта с увеличенным timeout
   const { data: projectDetail, isLoading: isLoadingDetail, refetch: refetchDetail } = useQuery({
     queryKey: ['project', selectedProject?.id],
     queryFn: async () => {
       if (!selectedProject) return null
-      // Используем прямой запрос с большим таймаутом
+
       const response = await fetch(`${import.meta.env.VITE_API_URL}/projects/${selectedProject.id}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
@@ -85,7 +81,6 @@ export default function Projects() {
     retry: 2,
   })
 
-  // === POLLING для проверки готовности ТЗ ===
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null
     
@@ -94,7 +89,7 @@ export default function Projects() {
       
       interval = setInterval(async () => {
         try {
-          // Проверяем статус проекта — если technical_spec появился, генерация завершена
+
           const response = await fetch(`${import.meta.env.VITE_API_URL}/projects/${selectedProject.id}`, {
             headers: {
               'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
@@ -122,7 +117,7 @@ export default function Projects() {
         } catch (error) {
           console.error('❌ Polling error:', error)
         }
-      }, 3000) // Проверяем каждые 3 секунды
+      }, 3000) 
     }
     
     return () => {
@@ -141,7 +136,6 @@ export default function Projects() {
     return companiesList.find(c => c.id === id)?.name || 'Компания'
   }
 
-  // === MUTATIONS ===
   const createMutation = useMutation({
     mutationFn: async () => {
       console.log('📤 Creating project...')
@@ -178,7 +172,6 @@ export default function Projects() {
     },
     onSuccess: async (data, variables) => {
       console.log('✅ Project published, invalidating...')
-      // 🔥 Немедленно обновляем локально для мгновенного UI
       queryClient.setQueryData(['projects', filters], (old: any) => {
         if (!old) return old
         return {
@@ -188,7 +181,6 @@ export default function Projects() {
           )
         }
       })
-      // Затем обновляем с сервера
       await queryClient.invalidateQueries({ queryKey: ['projects', filters] })
       await refetchProjects()
       addToast('Проект опубликован', 'success')
@@ -213,7 +205,6 @@ export default function Projects() {
       
       console.log('Request data:', requestData)
       
-      // 🔥 Используем прямой fetch с большим таймаутом
       const response = await fetch(`${import.meta.env.VITE_API_URL}/projects/${selectedProject.id}/generate-spec`, {
         method: 'POST',
         headers: {
@@ -235,9 +226,7 @@ export default function Projects() {
     },
     onSuccess: async () => {
       console.log('✅ TZ generation started, waiting for completion...')
-      // 🔥 Запускаем polling вместо ожидания ответа
       setTzGenerationTaskId(`task-${Date.now()}`)
-      // Не показываем success сразу — ждём polling
     },
     onError: (error: any) => {
       console.error('❌ Generate TZ error:', error)
@@ -252,7 +241,6 @@ export default function Projects() {
     }
   })
 
-  // === HANDLERS ===
   const resetForm = () => {
     setFormData({
       title: '',
@@ -286,7 +274,7 @@ export default function Projects() {
     console.log('🎯 Opening TZ modal for project:', project.id)
     setSelectedProject(project)
     setIsTZModalOpen(true)
-    setTzGenerationTaskId(null) // Сбрасываем task ID
+    setTzGenerationTaskId(null)
   }
 
   const handleGenerateTZ = () => {

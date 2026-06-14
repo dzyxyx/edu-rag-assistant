@@ -35,7 +35,6 @@ export function useMemory() {
     },
   })
 
-  //  Гарантируем, что nodes — всегда массив
   const nodes = Array.isArray(data) ? data : []
 
   return {

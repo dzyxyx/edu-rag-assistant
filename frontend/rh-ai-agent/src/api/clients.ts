@@ -2,16 +2,15 @@ import axios, { AxiosError, InternalAxiosRequestConfig, AxiosResponse } from 'ax
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1'
 
-// 🔥 Уменьшаем таймаут для обычных запросов (5 сек вместо 30)
+
 export const apiClient = axios.create({
   baseURL: API_URL,
   headers: { 
     'Content-Type': 'application/json',
     'Accept': 'application/json',
   },
-  timeout: 10000, // 10 секунд вместо 30
+  timeout: 10000, 
   withCredentials: false,
-  // 🔥 Добавляем transformResponse для лучшей обработки
   transformResponse: [(data: string) => {
     try {
       return JSON.parse(data)
@@ -22,7 +21,6 @@ export const apiClient = axios.create({
   }],
 })
 
-// 🔥 Для чата оставляем большой таймаут (5 мин)
 export const chatClient = axios.create({
   baseURL: API_URL,
   headers: { 
@@ -33,7 +31,6 @@ export const chatClient = axios.create({
   withCredentials: false,
 })
 
-// 🔥 Request interceptor с логированием
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const token = localStorage.getItem('auth_token')
@@ -41,7 +38,6 @@ apiClient.interceptors.request.use(
       config.headers.Authorization = `Bearer ${token}`
     }
     
-    // 🔥 Логирование запросов (в dev режиме)
     if (import.meta.env.DEV) {
       console.log('📤 API Request:', {
         method: config.method?.toUpperCase(),
@@ -59,10 +55,8 @@ apiClient.interceptors.request.use(
   }
 )
 
-// 🔥 Response interceptor с детальной диагностикой
 apiClient.interceptors.response.use(
   (response: AxiosResponse) => {
-    // 🔥 Логирование успешных ответов
     if (import.meta.env.DEV) {
       console.log('📥 API Response:', {
         url: response.config.url,
@@ -73,7 +67,6 @@ apiClient.interceptors.response.use(
     return response
   },
   (error: AxiosError) => {
-    // 🔥 Детальная диагностика ошибок
     if (import.meta.env.DEV) {
       console.error('❌ API Error:', {
         url: error.config?.url,
@@ -92,7 +85,6 @@ apiClient.interceptors.response.use(
       })
     }
     
-    // 🔌 Специальная обработка таймаутов
     if (error.code === 'ECONNABORTED') {
       console.error('⏰ Request timeout:', {
         url: error.config?.url,
@@ -100,10 +92,8 @@ apiClient.interceptors.response.use(
       })
     }
     
-    // 🔐 Очистка токена при 401
     if (error.response?.status === 401) {
       localStorage.removeItem('auth_token')
-      // 🔥 Перенаправление на логин (если не на странице логина)
       if (window.location.pathname !== '/login') {
         window.location.href = '/login'
       }
@@ -113,7 +103,6 @@ apiClient.interceptors.response.use(
   }
 )
 
-// 🔥 Аналогично для chatClient
 chatClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const token = localStorage.getItem('auth_token')

@@ -31,7 +31,7 @@ export class WebSocketChat {
   connect(): void {
     const url = `${this.baseUrl}/api/v1/rag/ws/chat/${this.sessionId}?token=${encodeURIComponent(this.token)}`
     
-    console.log('🔌 Connecting to WebSocket:', url.replace(/token=[^&]+/, 'token=***'))
+    console.log('Connecting to WebSocket:', url.replace(/token=[^&]+/, 'token=***'))
     
     this.ws = new WebSocket(url)
 
@@ -45,7 +45,6 @@ export class WebSocketChat {
       try {
         const chunk: ChatStreamChunk = JSON.parse(event.data)
         
-        // Обработка специальных маркеров
         if (chunk.done) {
           console.log('Stream completed')
         } else if (chunk.error) {
@@ -61,18 +60,18 @@ export class WebSocketChat {
     }
 
     this.ws.onerror = (error) => {
-      console.error('❌ WebSocket error:', error)
+      console.error('WebSocket error:', error)
       this.options.onError?.(error)
     }
 
     this.ws.onclose = () => {
-      console.log('🔌 WebSocket closed')
+      console.log('WebSocket closed')
       this.options.onClose?.()
       
       // Авто-переподключение при ошибке
       if (this.reconnectAttempts < this.maxReconnectAttempts) {
         this.reconnectAttempts++
-        console.log(`🔄 Reconnecting (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`)
+        console.log(`Reconnecting (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`)
         setTimeout(() => this.connect(), 1000 * this.reconnectAttempts)
       }
     }
@@ -98,7 +97,6 @@ export class WebSocketChat {
   }
 }
 
-// Хелпер для создания экземпляра
 export function createChatWebSocket(
   sessionId: number,
   token: string,
