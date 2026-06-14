@@ -105,13 +105,9 @@ def _mock_generate(title: str, description: str | None, industry: str | None, pr
 
 
 def _build_chain():
-    from langchain_ollama import ChatOllama
+    from app.services.llm.factory import get_chat_llm
 
-    llm = ChatOllama(
-        base_url=settings.OLLAMA_BASE_URL,
-        model=settings.OLLAMA_MODEL,
-        temperature=0.5,
-    )
+    llm = get_chat_llm(temperature=0.5)
     return ChatPromptTemplate.from_template(SPEC_PROMPT) | llm | StrOutputParser()
 
 

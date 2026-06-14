@@ -35,6 +35,10 @@ sentence-transformers==5.5.1
 tokenizers==0.22.2
 ollama==0.6.2
 
+# GigaChat fallback — "голый" SDK без зависимости от langchain-core
+# (langchain-gigachat требует langchain-core<0.4, конфликтует с langchain 1.x)
+gigachat==0.1.43
+
 # ── NLP & ML ─────────────────────────────────────────────────
 spacy==3.8.3
 scikit-learn==1.8.0

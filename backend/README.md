@@ -94,7 +94,8 @@ backend/
 │   │   │   └── realtime.py       # Redis pub/sub relay для WebSocket /notifications/ws
 │   │   ├── projects/
 │   │   │   └── generator.py      # Генерация ТЗ, разметка ролей/слотов
-│   │   └── llm/                  # Вспомогательные LLM-утилиты
+│   │   └── llm/
+│   │       └── factory.py        # get_chat_llm(): Ollama (основной) + fallback на GigaChat
 │   ├── workers/
 │   │   ├── celery_app.py        # Конфигурация Celery + Beat расписание
 │   │   └── tasks/
@@ -256,6 +257,9 @@ celery -A app.workers.celery_app flower --port=5555
 | `SENDGRID_API_KEY` | Ключ SendGrid | — (dry-run без него) |
 | `RATE_LIMIT_PER_MINUTE` | Лимит запросов на клиента в минуту (slowapi, S1-7). `0` — лимитер отключён | `60` |
 | `SENTRY_DSN` | DSN для отправки ошибок в Sentry. Пусто — Sentry не инициализируется | `""` |
+| `GIGACHAT_ENABLED` | Включить резервный LLM-провайдер GigaChat при недоступности Ollama | `false` |
+| `GIGACHAT_CREDENTIALS` | Authorization key (base64) из личного кабинета GigaChat | `""` |
+| `GIGACHAT_MODEL` | Модель GigaChat (`GigaChat` / `GigaChat-Pro` / `GigaChat-Max`) | `GigaChat` |
 
 Полный список — в `.env.example`. `RATE_LIMIT_PER_MINUTE` и `SENTRY_DSN` в `.env.example` пока не прописаны явно — при необходимости задайте их вручную в `.env`, иначе используются дефолты выше.
 
@@ -288,6 +292,16 @@ touch plan/шаблоны/проекты, RAG и RAG-чат, dashboard, realtime
 - `/api/v1/notifications/ws?token=<JWT>` — realtime-доставка уведомлений
   (Sprint 9), фильтрация по `recipient_role` через `app/core/notification_roles.py`,
   релей через Redis pub/sub (`app/services/notifications/realtime.py`).
+
+## Резервный LLM (GigaChat)
+
+Все LLM-цепочки (`rag/chain.py`, `projects/generator.py`, `communications/generator.py`,
+`outreach/generator.py`) собираются через `app/services/llm/factory.get_chat_llm()`.
+Основной провайдер — Ollama. Если `GIGACHAT_ENABLED=true` и задан `GIGACHAT_CREDENTIALS`,
+поверх Ollama навешивается fallback через `Runnable.with_fallbacks([...])`: при
+ошибке/таймауте/недоступности Ollama LangChain автоматически переключается на GigaChat
+для этого же запроса. Если GigaChat не настроен — поведение не меняется (только Ollama).
+При `MOCK_LLM=true` фабрика не используется вообще.
 
 ## Rate limiting
 

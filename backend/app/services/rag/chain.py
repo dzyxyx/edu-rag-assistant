@@ -94,19 +94,15 @@ def build_rag_chain():
         logger.warning("MOCK_LLM включён — Chroma и Ollama не загружаются")
         return _full_mock_chain()
 
-    # Реальная цепочка — загружает embeddings и Ollama
-    from langchain_ollama import ChatOllama
+    # Реальная цепочка — загружает embeddings и LLM (Ollama + fallback GigaChat)
+    from app.services.llm.factory import get_chat_llm
     from app.services.rag.vector_store import get_vector_store
 
     retriever = get_vector_store().as_retriever(
         search_type="similarity",
         search_kwargs={"k": 5},
     )
-    llm = ChatOllama(
-        base_url=settings.OLLAMA_BASE_URL,
-        model=settings.OLLAMA_MODEL,
-        temperature=0.3,
-    )
+    llm = get_chat_llm(temperature=0.3)
     prompt = ChatPromptTemplate.from_messages([
         ("system", SYSTEM_PROMPT),
         ("human", "{question}"),

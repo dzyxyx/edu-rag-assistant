@@ -163,13 +163,9 @@ def _mock_generate(comm_type: CommunicationType, params: dict, tone: str) -> tup
 
 
 def _build_chain(comm_type: CommunicationType):
-    from langchain_ollama import ChatOllama
+    from app.services.llm.factory import get_chat_llm
 
-    llm = ChatOllama(
-        base_url=settings.OLLAMA_BASE_URL,
-        model=settings.OLLAMA_MODEL,
-        temperature=0.5,
-    )
+    llm = get_chat_llm(temperature=0.5)
     template = _PROMPTS[comm_type]
     return ChatPromptTemplate.from_template(template) | llm | StrOutputParser()
 

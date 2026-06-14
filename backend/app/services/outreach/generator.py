@@ -77,12 +77,8 @@ def _mock_generate(company, tone: str, memory_context: str = "") -> tuple[str, s
 
 
 def _build_chain(tone: str):
-    from langchain_ollama import ChatOllama
-    llm = ChatOllama(
-        base_url=settings.OLLAMA_BASE_URL,
-        model=settings.OLLAMA_MODEL,
-        temperature=0.5,
-    )
+    from app.services.llm.factory import get_chat_llm
+    llm = get_chat_llm(temperature=0.5)
     template = FORMAL_PROMPT if tone == "formal" else INFORMAL_PROMPT
     return ChatPromptTemplate.from_template(template) | llm | StrOutputParser()
 

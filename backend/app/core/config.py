@@ -69,9 +69,16 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
     REFRESH_TOKEN_EXPIRE_DAYS: int = 30
 
-    # Ollama (локальный LLM-сервер)
+    # Ollama (локальный LLM-сервер, основной провайдер)
     OLLAMA_BASE_URL: str = "http://localhost:11434"
     OLLAMA_MODEL: str = "llama3.1:8b"          # модель по умолчанию, меняется в .env
+
+    # GigaChat (резервный облачный LLM — используется, если Ollama недоступна)
+    GIGACHAT_ENABLED: bool = False             # включить fallback на GigaChat
+    GIGACHAT_CREDENTIALS: str = ""             # Authorization key (base64) из личного кабинета
+    GIGACHAT_SCOPE: str = "GIGACHAT_API_PERS"  # GIGACHAT_API_PERS | GIGACHAT_API_B2B | GIGACHAT_API_CORP
+    GIGACHAT_MODEL: str = "GigaChat"           # GigaChat | GigaChat-Pro | GigaChat-Max
+    GIGACHAT_VERIFY_SSL_CERTS: bool = False    # для GigaChat часто нужны минцифровские сертификаты
 
     # HuggingFace (для локальных моделей и QLoRA)
     HF_TOKEN: str = ""
