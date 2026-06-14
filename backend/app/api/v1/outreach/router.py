@@ -9,9 +9,11 @@ from app.api.v1.outreach.schemas import (
     GenerateRequest, GenerateResponse,
 )
 from app.core.dependencies import get_current_user
+from app.db.models.notification import NotificationType
 from app.db.models.outreach import OutreachStatus
 from app.db.models.user import User
 from app.db.repositories.company import CompanyRepository
+from app.db.repositories.notification import NotificationRepository
 from app.db.repositories.outreach import OutreachRepository
 from app.db.session import get_db
 from app.services.memory.audit import log_action
@@ -142,6 +144,19 @@ async def generate_drafts(
                 },
                 user_id=current_user.id,
             )
+
+            if result["status"] == OutreachStatus.ESCALATED:
+                # Human-in-the-loop (Sprint 9, FR-4.6): низкая уверенность —
+                # уведомляем сотрудника о необходимости проверки письма.
+                notification_repo = NotificationRepository(db)
+                await notification_repo.create(
+                    type=NotificationType.OUTREACH_ESCALATED,
+                    title=f"Письмо для «{company.name}» требует проверки",
+                    message=f"Низкая уверенность агента (confidence={result['confidence']:.2f}).",
+                    entity_type="outreach_event",
+                    entity_id=event.id,
+                    recipient_role="менеджер по партнёрствам",
+                )
 
             generated += 1
         except Exception as exc:

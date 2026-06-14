@@ -1,4 +1,4 @@
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models.outreach import OutreachCampaign, OutreachEvent, OutreachStatus
@@ -103,6 +103,33 @@ class OutreachRepository:
             obj.body = body
             await self._s.flush()
         return obj
+
+    async def count_events(self, status: str | None = None) -> int:
+        q = select(func.count()).select_from(OutreachEvent)
+        if status is not None:
+            q = q.where(OutreachEvent.status == status)
+        result = await self._s.execute(q)
+        return result.scalar_one()
+
+    async def count_events_in(self, statuses: list[str]) -> int:
+        result = await self._s.execute(
+            select(func.count())
+            .select_from(OutreachEvent)
+            .where(OutreachEvent.status.in_(statuses))
+        )
+        return result.scalar_one()
+
+    async def list_events_in(
+        self, statuses: list[str], limit: int = 100, offset: int = 0
+    ) -> list[OutreachEvent]:
+        result = await self._s.execute(
+            select(OutreachEvent)
+            .where(OutreachEvent.status.in_(statuses))
+            .order_by(OutreachEvent.created_at.desc())
+            .limit(limit)
+            .offset(offset)
+        )
+        return list(result.scalars().all())
 
     async def save_reply(
         self, event_id: int, reply_body: str, reply_category: str

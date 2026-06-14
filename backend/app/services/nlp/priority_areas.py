@@ -12,7 +12,9 @@ from collections import defaultdict
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.db.models.notification import NotificationType
 from app.db.repositories.competency import CompetencyRepository
+from app.db.repositories.notification import NotificationRepository
 from app.db.repositories.priority_area import PriorityAreaRepository
 
 logger = logging.getLogger(__name__)
@@ -24,6 +26,7 @@ async def generate_priority_area_proposals(session: AsyncSession) -> int:
     """Генерирует/обновляет предложения PriorityArea по отраслям. Возвращает количество."""
     competency_repo = CompetencyRepository(session)
     priority_repo = PriorityAreaRepository(session)
+    notification_repo = NotificationRepository(session)
 
     matrix = await competency_repo.matrix_by_industry()
     if not matrix:
@@ -65,14 +68,25 @@ async def generate_priority_area_proposals(session: AsyncSession) -> int:
             f"{', '.join(names)}."
         )
 
-        _, was_created = await priority_repo.upsert_proposal(
+        area, was_created = await priority_repo.upsert_proposal(
             name=name,
             industry=industry,
             score=avg_score,
             competency_ids=competency_ids,
             description=description,
         )
-        created += 1 if was_created else 0
+        if was_created:
+            created += 1
+            # Human-in-the-loop (Sprint 9, FR-1.5): уведомляем о новой
+            # приоритетной области, требующей review.
+            await notification_repo.create(
+                type=NotificationType.PRIORITY_AREA_PROPOSED,
+                title=f"Новая приоритетная область: {industry}",
+                message=description,
+                entity_type="priority_area",
+                entity_id=area.id,
+                recipient_role="методист",
+            )
 
     await session.flush()
     logger.info("priority_areas: сформировано/обновлено предложений: %d отраслей", len(by_industry))
