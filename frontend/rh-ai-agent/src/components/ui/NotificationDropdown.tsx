@@ -1,86 +1,75 @@
-import { useEffect, useRef } from 'react'
-import { useNotifications } from '@/hooks/useNotifications'  //  Используем хук
+import { useNotifications } from '@/hooks/useNotifications'
+import { Badge } from './Badge'
+import { Button } from './Button'
+import { CheckCheck, Bell } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { CheckCheck, Bell, AlertTriangle, MessageSquare, Send, Clock } from 'lucide-react'
 
-interface Props {
+interface NotificationDropdownProps {
   isOpen: boolean
   onClose: () => void
 }
 
-export function NotificationDropdown({ isOpen, onClose }: Props) {
-  const { t } = useTranslation()
-  
-  const { notifications, markAllRead, unreadCount } = useNotifications()
-  
-  const ref = useRef<HTMLDivElement>(null)
+export function NotificationDropdown({ isOpen, onClose }: NotificationDropdownProps) {
+  const { i18n } = useTranslation()
+  const { notifications, isLoading, unreadCount, markAsRead, markAllRead } = useNotifications()
 
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) onClose()
-    }
-    if (isOpen) document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [isOpen, onClose])
-
-  const typeIcons: Record<string, JSX.Element> = {
-    escalation: <AlertTriangle size={16} className="text-amber-500" />,
-    followup: <Clock size={16} className="text-blue-500" />,
-    response: <MessageSquare size={16} className="text-green-500" />,
-    system: <Bell size={16} className="text-slate-500" />
-  }
-
-  //  Безопасная проверка: notifications может быть пустым массивом
-  const safeNotifications = notifications || []
-  const safeUnreadCount = unreadCount || 0
+  if (!isOpen) return null
 
   return (
-    <div 
-      ref={ref}
-      className={`absolute right-0 top-full mt-2 w-80 bg-white rounded-xl shadow-xl border border-border z-50 transition-all duration-200 ${isOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'}`}
-    >
-      <div className="p-3 border-b border-border flex justify-between items-center bg-slate-50 rounded-t-xl">
+    <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-xl shadow-xl border border-border z-50 overflow-hidden">
+      <div className="p-3 border-b border-border bg-slate-50 flex items-center justify-between">
         <h3 className="font-semibold text-sm text-text-primary flex items-center gap-2">
-          <Bell size={16} /> {t('notifications.title')}
-          {safeUnreadCount > 0 && (
-            <span className="bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">
-              {safeUnreadCount}
-            </span>
+          <Bell size={16} />
+          Уведомления
+          {unreadCount > 0 && (
+            <Badge variant="destructive" className="text-xs">{unreadCount}</Badge>
           )}
         </h3>
-        {safeUnreadCount > 0 && (
-          <button 
-            onClick={markAllRead} 
-            className="text-xs text-primary hover:underline flex items-center gap-1"
-          >
-            <CheckCheck size={12} /> {t('notifications.markAllRead')}
-          </button>
+        {unreadCount > 0 && (
+          <Button variant="ghost" size="sm" onClick={markAllRead} className="h-7 px-2 text-xs">
+            <CheckCheck size={14} className="mr-1" />
+            Прочитать все
+          </Button>
         )}
       </div>
 
-      <div className="max-h-80 overflow-y-auto">
-        {safeNotifications.length === 0 ? (
-          <div className="p-6 text-center text-text-secondary text-sm">
-            {t('notifications.empty')}
+      <div className="max-h-96 overflow-y-auto">
+        {isLoading ? (
+          <div className="flex items-center justify-center py-8">
+            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary"></div>
+          </div>
+        ) : notifications.length === 0 ? (
+          <div className="text-center py-8 text-sm text-text-secondary">
+            Нет уведомлений
           </div>
         ) : (
-          safeNotifications.map((n) => (
-            <button
-              key={n.id}
-              onClick={() => !n.is_read && markAllRead()}
-              className={`w-full text-left p-3 border-b border-border last:border-0 hover:bg-slate-50 transition-colors flex gap-3 ${!n.is_read ? 'bg-blue-50/50' : ''}`}
+          notifications.map((notification) => (
+            <div 
+              key={notification.id}
+              className={`p-3 border-b border-border hover:bg-slate-50 transition-colors ${
+                !notification.is_read ? 'bg-blue-50/50' : ''
+              }`}
+              onClick={() => markAsRead(notification.id)}
             >
-              <div className="mt-1 shrink-0">
-                {typeIcons[n.type] || typeIcons.system}
+              <div className="flex items-start gap-2">
+                {!notification.is_read && (
+                  <div className="w-2 h-2 rounded-full bg-primary mt-1.5 shrink-0" />
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className={`text-sm ${notification.is_read ? 'text-text-secondary' : 'font-medium text-text-primary'}`}>
+                    {notification.title}
+                  </p>
+                  <p className="text-xs text-text-secondary mt-1 line-clamp-2">
+                    {notification.message}
+                  </p>
+                  <p className="text-[10px] text-text-secondary mt-2">
+                    {new Date(notification.created_at).toLocaleString(i18n.language === 'ru' ? 'ru-RU' : 'en-US', {
+                      day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
+                    })}
+                  </p>
+                </div>
               </div>
-              <div className="flex-1 min-w-0">
-                <p className={`text-sm ${!n.is_read ? 'font-semibold text-text-primary' : 'text-text-secondary'}`}>
-                  {t(n.i18nKey, n.params || {})}
-                </p>
-                <p className="text-xs text-gray-400 mt-1">{n.timestamp}</p>
-              </div>
-              {!n.is_read && <div className="w-2 h-2 rounded-full bg-primary mt-2 shrink-0" />}
-            </button>
+            </div>
           ))
         )}
       </div>

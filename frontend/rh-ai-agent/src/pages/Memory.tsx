@@ -38,6 +38,7 @@ interface Node {
   vy: number
   weight: number
   radius: number
+  connections?: Array<{ to_id: number }>
 }
 
 interface Link {
@@ -58,14 +59,18 @@ export default function Memory() {
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
   const animationRef = useRef<number>()
 
+  // 🔥 Безопасная работа с данными
+  const safeNodes = apiNodes || []
+
   const initializeNodes = (): { nodes: Node[]; links: Link[] } => {
     const nodes: Node[] = []
     const links: Link[] = []
     const addedIds = new Set<string>()
 
-    const companies = apiNodes.filter(n => n.type === 'company')
-    const skills = apiNodes.filter(n => n.type === 'skill')
-    const competencies = apiNodes.filter(n => n.type === 'competency')
+    // 🔥 Фильтрация с защитой от undefined
+    const companies = safeNodes.filter(n => n?.type === 'company')
+    const skills = safeNodes.filter(n => n?.type === 'skill')
+    const competencies = safeNodes.filter(n => n?.type === 'competency')
 
     companies.forEach((n, i) => {
       const angle = (i / Math.max(companies.length, 1)) * Math.PI * 2
@@ -73,7 +78,7 @@ export default function Memory() {
       nodes.push({
         id: String(n.id), label: n.label, type: n.type,
         x: 300 + Math.cos(angle) * radius, y: 300 + Math.sin(angle) * radius,
-        vx: 0, vy: 0, weight: n.weight, radius: Math.max(10, Math.min(28, n.weight * 3))
+        vx: 0, vy: 0, weight: n.weight || 0, radius: Math.max(10, Math.min(28, (n.weight || 0) * 3))
       })
       addedIds.add(String(n.id))
     })
@@ -84,7 +89,7 @@ export default function Memory() {
       nodes.push({
         id: String(n.id), label: translateLabel(n.label, n.type, locale), type: n.type,
         x: 700 + Math.cos(angle) * radius, y: 300 + Math.sin(angle) * radius,
-        vx: 0, vy: 0, weight: n.weight, radius: Math.max(7, Math.min(16, n.weight * 2))
+        vx: 0, vy: 0, weight: n.weight || 0, radius: Math.max(7, Math.min(16, (n.weight || 0) * 2))
       })
       addedIds.add(String(n.id))
     })
@@ -93,14 +98,16 @@ export default function Memory() {
       const x = 150 + (i * 120) % 700
       nodes.push({
         id: String(n.id), label: translateLabel(n.label, n.type, locale), type: n.type,
-        x: x, y: 120, vx: 0, vy: 0, weight: n.weight, radius: Math.max(7, Math.min(14, n.weight * 2))
+        x: x, y: 120, vx: 0, vy: 0, weight: n.weight || 0, radius: Math.max(7, Math.min(14, (n.weight || 0) * 2))
       })
       addedIds.add(String(n.id))
     })
 
-    apiNodes.forEach(n => {
-      n.connections.forEach(conn => {
-        if (addedIds.has(String(conn.to_id))) {
+    // 🔥 Безопасная обработка связей
+    safeNodes.forEach(n => {
+      const connections = n.connections || []
+      connections.forEach(conn => {
+        if (conn?.to_id && addedIds.has(String(conn.to_id))) {
           links.push({ source: String(n.id), target: String(conn.to_id) })
         }
       })
@@ -161,6 +168,8 @@ export default function Memory() {
     if (!ctx) return
 
     const { nodes, links } = initializeNodes()
+    if (nodes.length === 0) return // 🔥 Не рисуем если нет данных
+
     simulateForce(nodes, links, 250)
 
     const draw = () => {
@@ -235,16 +244,17 @@ export default function Memory() {
       canvas.removeEventListener('wheel', handleWheel)
       if (animationRef.current) cancelAnimationFrame(animationRef.current)
     }
-  }, [apiNodes, scale, offset, locale])
+  }, [safeNodes, scale, offset, locale])
 
   const handleMouseDown = (e: React.MouseEvent) => { setIsDragging(true); setDragStart({ x: e.clientX - offset.x, y: e.clientY - offset.y }) }
   const handleMouseMove = (e: React.MouseEvent) => { if (isDragging) setOffset({ x: e.clientX - dragStart.x, y: e.clientY - dragStart.y }) }
   const handleMouseUp = () => setIsDragging(false)
 
+  // 🔥 Безопасный расчёт статистики
   const stats = {
-    companies: apiNodes.filter(n => n.type === 'company').length,
-    skills: apiNodes.filter(n => n.type === 'skill').length,
-    connections: apiNodes.reduce((acc, n) => acc + n.connections.length, 0) / 2
+    companies: safeNodes.filter(n => n?.type === 'company').length,
+    skills: safeNodes.filter(n => n?.type === 'skill').length,
+    connections: safeNodes.reduce((acc, n) => acc + ((n.connections?.length) || 0), 0) / 2
   }
 
   if (isLoading) {
@@ -263,7 +273,7 @@ export default function Memory() {
           <p className="text-text-secondary mt-1">{t('memory.subtitle')}</p>
         </div>
         <Badge variant="info" className="flex items-center gap-2">
-          <BrainCircuit size={14} /> {t('memory.companies')}: {apiNodes.length}
+          <BrainCircuit size={14} /> {t('memory.companies')}: {safeNodes.length}
         </Badge>
       </div>
 

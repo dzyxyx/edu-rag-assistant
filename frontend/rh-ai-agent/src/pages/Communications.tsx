@@ -72,19 +72,22 @@ export default function Communications() {
   const { data: cards, isLoading: isLoadingCards } = useQuery({
     queryKey: ['outreach', 'cards'],
     queryFn: () => outreachApi.list().then(res => res.data),
+    placeholderData: (previous) => previous || [],
     staleTime: 2 * 60 * 1000,
   })
 
   const { data: companiesData } = useQuery({
     queryKey: ['companies', 'list'],
-    queryFn: () => companiesApi.list({ limit: 200 }).then(res => res.data),
+    queryFn: () => companiesApi.list({ limit: 100 }).then(res => res.data), // Было 200 → стало 100
+    placeholderData: (previous) => previous || { items: [] },
     staleTime: 5 * 60 * 1000,
   })
 
   const { data: typesData, isLoading: isLoadingTypes } = useQuery({
     queryKey: ['communications', 'types'],
     queryFn: () => communicationsApi.getTypes().then(res => res.data),
-    staleTime: 30 * 60 * 1000,
+    placeholderData: (previous) => previous || { items: [] },
+    staleTime: 30 * 60 * 1000, // 30 минут - типы редко меняются
   })
 
   const companiesList = companiesData?.items || []

@@ -1,82 +1,92 @@
-import { useState, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState } from 'react'
 import { authApi } from '@/api/endpoints'
 import { useAppStore } from '@/store/useAppStore'
-import type { UserCreate, UserLogin, UserRead } from '@/api/types'
+import type { UserLogin, TokenResponse, UserRead } from '@/api/types'
 
 export function useAuth() {
   const [isLoading, setIsLoading] = useState(false)
-  
-  const { setAuth, setUser, addToast } = useAppStore()
-  const navigate = useNavigate()
+  const [error, setError] = useState<string | null>(null)
+  const { setAuth, setUser } = useAppStore()
 
-  const requestRef = useRef<{ login: boolean; register: boolean }>({
-    login: false,
-    register: false,
-  })
-
-  const register = async (data: UserCreate) => {
+  const login = async (credentials: UserLogin): Promise<{ success: boolean; error?: string }> => {
     setIsLoading(true)
+    setError(null)
 
     try {
-      await authApi.register(data)
-      
-      addToast('Регистрация успешна! Теперь войдите в систему.', 'success')
-      
-      
-      return { success: true }
-    } catch (err: any) {
-      const message = err.response?.data?.detail || 'Ошибка регистрации'
-      addToast(message, 'error')
-      return { success: false, error: message }
-    } finally {
-      setIsLoading(false)
-    }
-  }
+      const response = await authApi.login(credentials)
+      const data: TokenResponse = response.data
 
-  const login = async (data: UserLogin) => {
-    setIsLoading(true)
+      // 🔥 Сохраняем токен
+      if (data.access_token) {
+        localStorage.setItem('auth_token', data.access_token)
+      }
 
-    try {
-      const { data: tokenData } = await authApi.login(data)
-      
-      localStorage.setItem('auth_token', tokenData.access_token)
-      
-      const { data: userData } = await authApi.me()
-      
       setAuth({
-        userId: String(userData.id),
+        userId: '',
         role: 'user',
-        token: tokenData.access_token,
+        token: data.access_token,
       })
-      
-      setUser(userData)
-      
-      addToast('Вход выполнен!', 'success')
-      navigate('/')
-      
+
+      // Загружаем профиль
+      try {
+        const profileResponse = await authApi.me()
+        const userData: UserRead = profileResponse.data
+        setUser(userData)
+        setAuth(prev => prev ? { ...prev, userId: String(userData.id) } : null)
+      } catch (profileErr) {
+        console.warn('Failed to load user profile:', profileErr)
+      }
+
       return { success: true }
     } catch (err: any) {
-      const message = err.response?.data?.detail || 'Неверный email или пароль'
-      addToast(message, 'error')
+      console.error('Login error:', err)
+      
+      let message = 'Ошибка при входе'
+      if (err.response?.status === 401) {
+        message = 'Неверный email или пароль'
+      } else if (err.response?.status === 422) {
+        message = 'Проверьте правильность заполнения полей'
+      } else if (err.message) {
+        message = err.message
+      }
+      
+      setError(message)
       return { success: false, error: message }
     } finally {
       setIsLoading(false)
     }
   }
 
-  const logout = () => {
+  // 🔥 Мгновенный логаут: не ждём ответа от бэкенда
+  const logout = async () => {
+    // 1. Немедленно очищаем локальную сессию
     localStorage.removeItem('auth_token')
     setAuth(null)
     setUser(null)
-    navigate('/login')
-    addToast('Вы вышли из системы', 'info')
+
+    // 2. Отправляем запрос на бэкенд в фоне (не ждём ответа)
+    // 🔥 Используем AbortController для отмены запроса через 2 секунды
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 2000)
+
+    try {
+      // 🔥 Вызываем логаут с коротким таймаутом
+      await authApi.logout()
+    } catch (err) {
+      // 🔥 Игнорируем ошибки: пользователь уже вышел локально
+      console.log('Logout request completed or timed out (ignored)')
+    } finally {
+      clearTimeout(timeoutId)
+    }
+
+    // 3. Редирект на страницу входа (выполняется сразу)
+    window.location.href = '/login'
   }
 
   return {
-    register,
     login,
     logout,
     isLoading,
+    error,
   }
 }

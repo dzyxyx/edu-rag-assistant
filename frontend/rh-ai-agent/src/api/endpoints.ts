@@ -132,26 +132,45 @@ export const outreachApi = {
 
 // ==================== PROJECTS ====================
 export const projectsApi = {
-  list: () =>
-    apiClient.get<Project[]>('/projects'),
+  // Список проектов с фильтрами
+  list: (filters?: ProjectsFilters) =>
+    apiClient.get<ProjectsResponse>('/projects', { params: filters }),
 
-  getById: (id: number) =>
-    apiClient.get<Project>(`/projects/${id}`),
-
-  create: (data: Partial<Project>) =>
+  // Создать проект (черновик)
+  create: (data: ProjectCreate) =>
     apiClient.post<Project>('/projects', data),
 
-  update: (id: number, data: Partial<Project>) =>
-    apiClient.patch<Project>(`/projects/${id}`, data),
+  // Получить проект по ID
+  getById: (projectId: number) =>
+    apiClient.get<Project>(`/projects/${projectId}`),
 
-  delete: (id: number) =>
-    apiClient.delete(`/projects/${id}`),
+  // Обновить проект
+  update: (projectId: number, data: ProjectUpdate) =>
+    apiClient.patch<Project>(`/projects/${projectId}`, data),
 
-  publish: (id: number) =>
-    apiClient.post<{ task_id: string }>(`/projects/${id}/publish`),
+  // Удалить проект
+  delete: (projectId: number) =>
+    apiClient.delete(`/projects/${projectId}`),
 
-  export: () =>
-    apiClient.get<Blob>('/projects/export', { responseType: 'blob' }),
+  // Сменить статус проекта
+  updateStatus: (projectId: number, data: ProjectStatusUpdate) =>
+    apiClient.patch<Project>(`/projects/${projectId}/status`, data),
+
+  // (Пере)генерировать ТЗ
+  generateSpec: (projectId: number, data: GenerateSpecRequest) =>
+    apiClient.post<GenerateSpecResponse>(`/projects/${projectId}/generate-spec`, data),
+
+  // Получить роли проекта
+  getRoles: (projectId: number) =>
+    apiClient.get<RoleSlotsResponse>(`/projects/${projectId}/roles`),
+
+  // Добавить роль
+  addRole: (projectId: number, data: RoleSlotCreate) =>
+    apiClient.post<RoleSlot>(`/projects/${projectId}/roles`, data),
+
+  // Назначить студента на роль
+  assignRole: (projectId: number, slotId: number, data: RoleSlotAssign) =>
+    apiClient.post<RoleSlot>(`/projects/${projectId}/roles/${slotId}/assign`, data),
 }
 
 // ==================== MEMORY ====================
@@ -186,23 +205,32 @@ export const vacanciesApi = {
 
 // ==================== DASHBOARD ====================
 export const dashboardApi = {
+  // Сводные метрики
   stats: () =>
     apiClient.get<DashboardStats>('/dashboard/stats'),
 
+  // Очередь human-in-the-loop
+  pendingReview: () =>
+    apiClient.get<PendingReviewResponse>('/dashboard/pending-review'),
+
+  // Активность (если ещё используется)
   activities: (limit = 20) =>
     apiClient.get<ActivityLog[]>(`/dashboard/activities?limit=${limit}`),
 }
 
 // ==================== NOTIFICATIONS ====================
 export const notificationsApi = {
-  list: () =>
-    apiClient.get<Notification[]>('/notifications'),
+  // Список уведомлений
+  list: (params?: { unread_only?: boolean; limit?: number; offset?: number }) =>
+    apiClient.get<NotificationsResponse>('/notifications', { params }),
 
+  // Отметить как прочитанное
   markAsRead: (id: number) =>
-    apiClient.post(`/notifications/${id}/read`),
+    apiClient.post<{ status: string; notification: Notification }>(`/notifications/${id}/read`),
 
+  // Отметить все как прочитанные
   markAllRead: () =>
-    apiClient.post('/notifications/mark-all-read'),
+    apiClient.post<{ status: string; notification: null }>('/notifications/read-all'),
 }
 
 // ==================== TASKS ====================
@@ -292,14 +320,19 @@ export const industryApi = {
 }
 
 export const communicationsApi = {
-  // Получить список типов коммуникаций
   getTypes: () =>
     apiClient.get<CommunicationsResponse>('/communications/types'),
 
-  // Сгенерировать текст коммуникации
   generate: (data: CommunicationGenerateRequest) =>
-    apiClient.post<CommunicationGenerateResponse>('/communications/generate', data),
+    apiClient.post<CommunicationGenerateResponse>('/communications/generate', {
+      ...data,
+      // 🔥 Если type === 'project_invitation' и есть project_id — удаляем старые поля
+      ...(data.type === 'project_invitation' && data.project_id
+        ? { project_id: data.project_id, project_name: undefined, project_description: undefined }
+        : {}),
+    }),
 }
+
 
 // ==================== AUTH ====================
 export const authApi = {

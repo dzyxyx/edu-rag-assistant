@@ -104,17 +104,51 @@ export interface FollowUp {
 // ==================== PROJECT ====================
 export interface Project extends BaseEntity {
   title: string
-  partner: string
-  company_id: number
-  complexity: 'easy' | 'medium' | 'hard'
-  roles: string[]
-  competencies: string[]
-  technologies: string[]
-  status: 'product' | 'research' | 'educational'
-  is_published: boolean
-  tz_content?: string
-  deadline?: string
-  max_students?: number
+  description: string
+  technical_spec?: string
+  partner_company_id?: number
+  status: 'draft' | 'published' | 'in_progress' | 'completed' | 'archived'
+  duration_weeks?: number
+  team_size?: number
+  difficulty: 'easy' | 'medium' | 'hard'
+  procompetency_id?: string
+  created_at: string
+}
+
+export interface ProjectCreate {
+  title: string
+  description?: string
+  partner_company_id?: number
+  difficulty?: 'easy' | 'medium' | 'hard'
+  generate_spec?: boolean
+  priority_area?: string
+}
+
+export interface ProjectUpdate {
+  title?: string
+  description?: string
+  technical_spec?: string
+  partner_company_id?: number
+  status?: 'draft' | 'published' | 'in_progress' | 'completed' | 'archived'
+  duration_weeks?: number
+  team_size?: number
+  difficulty?: 'easy' | 'medium' | 'hard'
+  procompetency_id?: string
+}
+
+export interface ProjectStatusUpdate {
+  status: 'draft' | 'published' | 'in_progress' | 'completed' | 'archived'
+}
+
+export interface GenerateSpecRequest {
+  priority_area?: string
+  difficulty?: 'easy' | 'medium' | 'hard'
+  apply_role_slots?: boolean
+}
+
+export interface GenerateSpecResponse {
+  project: Project
+  role_slots_created: number
 }
 
 // ==================== AGENT MEMORY ====================
@@ -264,13 +298,30 @@ export interface PaginatedResponse<T> {
 
 // ==================== DASHBOARD ====================
 export interface DashboardStats {
-  total_companies: number
-  total_projects: number
-  total_outreach: number
-  conversion_rate: number
-  meetings_count: number
-  conversion_chart: { month: string; value: number }[]
-  recent_activities: ActivityLog[]
+  companies_total: number
+  companies_shortlisted: number
+  companies_partners: number
+  priority_areas_proposed: number
+  priority_areas_approved: number
+  outreach_sent: number
+  outreach_replied: number
+  outreach_escalated: number
+  pending_review_total: number
+}
+
+export interface PendingReviewItem {
+  type: 'priority_area' | 'outreach_event'
+  id: number
+  title: string
+  description: string
+  status: string
+  created_at: string
+  link: string
+}
+
+export interface PendingReviewResponse {
+  total: number
+  items: PendingReviewItem[]
 }
 
 export interface ActivityLog {
@@ -282,13 +333,22 @@ export interface ActivityLog {
 }
 
 // ==================== NOTIFICATIONS ====================
-export interface Notification extends BaseEntity {
-  user_id: number
-  type: 'escalation' | 'followup' | 'response' | 'system'
+export interface Notification {
+  id: number
+  type: 'priority_area_proposed' | 'outreach_escalated' | 'outreach_draft_review' | 'general'
   title: string
   message: string
+  entity_type: string
+  entity_id: number
+  recipient_role: string
   is_read: boolean
-  link?: string
+  created_at: string
+}
+
+export interface NotificationsResponse {
+  items: Notification[]
+  total: number
+  unread: number
 }
 
 // ==================== INDUSTRY ANALYTICS ====================
@@ -365,4 +425,40 @@ export interface CommunicationGenerateResponse {
 
 export interface CommunicationsResponse {
   items: CommunicationType[]
+}
+
+export interface RoleSlot {
+  id: number
+  project_id: number
+  role: 'developer' | 'analyst' | 'designer' | 'manager' | 'tester' | 'devops'
+  slots_count: number
+  skills_required: string[]  // Бэкенд возвращает JSON-строку, парсим на фронте
+  assigned_student_id?: number
+}
+
+export interface RoleSlotCreate {
+  role: 'developer' | 'analyst' | 'designer' | 'manager' | 'tester' | 'devops'
+  slots_count?: number
+  skills_required?: string[]
+}
+
+export interface RoleSlotAssign {
+  student_id: number
+}
+
+export interface RoleSlotsResponse {
+  items: RoleSlot[]
+}
+
+// ==================== PROJECTS LIST ====================
+export interface ProjectsResponse {
+  total: number
+  items: Project[]
+}
+
+export interface ProjectsFilters {
+  status?: 'draft' | 'published' | 'in_progress' | 'completed' | 'archived'
+  partner_company_id?: number
+  limit?: number
+  offset?: number
 }

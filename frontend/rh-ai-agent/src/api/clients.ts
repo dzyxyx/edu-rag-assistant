@@ -1,17 +1,28 @@
-import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios'
+import axios, { AxiosError, InternalAxiosRequestConfig, AxiosResponse } from 'axios'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1'
 
+// 🔥 Уменьшаем таймаут для обычных запросов (5 сек вместо 30)
 export const apiClient = axios.create({
   baseURL: API_URL,
   headers: { 
     'Content-Type': 'application/json',
     'Accept': 'application/json',
   },
-  timeout: 30000,
+  timeout: 10000, // 10 секунд вместо 30
   withCredentials: false,
+  // 🔥 Добавляем transformResponse для лучшей обработки
+  transformResponse: [(data: string) => {
+    try {
+      return JSON.parse(data)
+    } catch (e) {
+      console.warn('Failed to parse response:', data)
+      return data
+    }
+  }],
 })
 
+// 🔥 Для чата оставляем большой таймаут (5 мин)
 export const chatClient = axios.create({
   baseURL: API_URL,
   headers: { 
@@ -22,34 +33,87 @@ export const chatClient = axios.create({
   withCredentials: false,
 })
 
+// 🔥 Request interceptor с логированием
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const token = localStorage.getItem('auth_token')
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`
     }
-    return config
-  },
-  (error) => Promise.reject(error)
-)
-
-apiClient.interceptors.response.use(
-  (response) => response,
-  (error: AxiosError) => {
+    
+    // 🔥 Логирование запросов (в dev режиме)
     if (import.meta.env.DEV) {
-      console.error('API Error:', {
-        url: error.config?.url,
-        status: error.response?.status,
-        message: error.message,
+      console.log('📤 API Request:', {
+        method: config.method?.toUpperCase(),
+        url: config.url,
+        headers: config.headers,
+        data: config.data,
       })
     }
-    if (error.response?.status === 401) {
-      localStorage.removeItem('auth_token')
-    }
+    
+    return config
+  },
+  (error) => {
+    console.error('❌ Request interceptor error:', error)
     return Promise.reject(error)
   }
 )
 
+// 🔥 Response interceptor с детальной диагностикой
+apiClient.interceptors.response.use(
+  (response: AxiosResponse) => {
+    // 🔥 Логирование успешных ответов
+    if (import.meta.env.DEV) {
+      console.log('📥 API Response:', {
+        url: response.config.url,
+        status: response.status,
+        data: response.data,
+      })
+    }
+    return response
+  },
+  (error: AxiosError) => {
+    // 🔥 Детальная диагностика ошибок
+    if (import.meta.env.DEV) {
+      console.error('❌ API Error:', {
+        url: error.config?.url,
+        method: error.config?.method,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        message: error.message,
+        code: error.code,
+        data: error.response?.data,
+        headers: error.response?.headers,
+        config: {
+          baseURL: error.config?.baseURL,
+          url: error.config?.url,
+          timeout: error.config?.timeout,
+        }
+      })
+    }
+    
+    // 🔌 Специальная обработка таймаутов
+    if (error.code === 'ECONNABORTED') {
+      console.error('⏰ Request timeout:', {
+        url: error.config?.url,
+        timeout: error.config?.timeout,
+      })
+    }
+    
+    // 🔐 Очистка токена при 401
+    if (error.response?.status === 401) {
+      localStorage.removeItem('auth_token')
+      // 🔥 Перенаправление на логин (если не на странице логина)
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login'
+      }
+    }
+    
+    return Promise.reject(error)
+  }
+)
+
+// 🔥 Аналогично для chatClient
 chatClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const token = localStorage.getItem('auth_token')

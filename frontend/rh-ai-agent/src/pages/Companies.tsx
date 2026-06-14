@@ -123,10 +123,6 @@ export default function Companies() {
           <h1 className="text-2xl font-bold text-text-primary">{t('companies.title')}</h1>
           <p className="text-text-secondary mt-1">{t('companies.subtitle')}</p>
         </div>
-        <Button variant="secondary" size="sm" onClick={() => {/* export */}}>
-          <Download size={16} className="mr-2" />
-          {t('companies.export')}
-        </Button>
       </div>
 
       {/* Filters */}
