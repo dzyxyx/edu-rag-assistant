@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { useNotifications } from '@/hooks/useNotifications'  // 🔥 Используем хук
+import { useNotifications } from '@/hooks/useNotifications'  //  Используем хук
 import { useTranslation } from 'react-i18next'
 import { CheckCheck, Bell, AlertTriangle, MessageSquare, Send, Clock } from 'lucide-react'
 
@@ -30,7 +30,7 @@ export function NotificationDropdown({ isOpen, onClose }: Props) {
     system: <Bell size={16} className="text-slate-500" />
   }
 
-  // 🔥 Безопасная проверка: notifications может быть пустым массивом
+  //  Безопасная проверка: notifications может быть пустым массивом
   const safeNotifications = notifications || []
   const safeUnreadCount = unreadCount || 0
 

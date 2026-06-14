@@ -25,7 +25,7 @@ export function useNotifications() {
     },
   })
 
-  // 🔥 Безопасная работа с данными: гарантируем, что notifications — массив
+  //  Безопасная работа с данными: гарантируем, что notifications — массив
   const notifications = Array.isArray(data) ? data : []
   const unreadCount = notifications.filter((n: any) => !n.is_read).length
 

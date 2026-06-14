@@ -1,24 +1,45 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useCompanies } from '@/hooks/useCompanies'
 import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { 
-  Building2, Search, Filter, Download, CheckCircle2, 
-  TrendingUp, Loader2, MapPin, Globe, Users 
+  Building2, Search, Download, CheckCircle2, 
+  TrendingUp, Loader2, MapPin, Globe, ChevronLeft, ChevronRight
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { exportCompaniesReport } from '@/lib/export'
+
+//  Скелетон таблицы
+const TableSkeleton = () => (
+  <tbody className="divide-y divide-border">
+    {Array.from({ length: 10 }).map((_, i) => (
+      <tr key={i}>
+        <td className="px-4 py-3"><div className="h-4 w-4 bg-slate-200 rounded animate-pulse" /></td>
+        <td className="px-4 py-3">
+          <div className="space-y-2">
+            <div className="h-4 w-32 bg-slate-200 rounded animate-pulse" />
+            <div className="h-3 w-24 bg-slate-200 rounded animate-pulse" />
+          </div>
+        </td>
+        <td className="px-4 py-3"><div className="h-4 w-20 bg-slate-200 rounded animate-pulse" /></td>
+        <td className="px-4 py-3"><div className="h-4 w-24 bg-slate-200 rounded animate-pulse" /></td>
+        <td className="px-4 py-3"><div className="h-6 w-12 bg-slate-200 rounded mx-auto animate-pulse" /></td>
+        <td className="px-4 py-3"><div className="h-5 w-16 bg-slate-200 rounded animate-pulse" /></td>
+      </tr>
+    ))}
+  </tbody>
+)
 
 export default function Companies() {
   const { t, i18n } = useTranslation()
   const locale = i18n.language
   
+  const [searchInput, setSearchInput] = useState('')
   const [filters, setFilters] = useState({
     search: '',
     status: '',
-    limit: 50,
+    limit: 30,
     offset: 0,
   })
   
@@ -29,16 +50,23 @@ export default function Companies() {
     companies, 
     total, 
     isLoading, 
+    isFetching,
     verifyCompanies, 
     isVerifying,
     scoreCompanies,
     isScoring,
-    refetch 
   } = useCompanies(filters)
 
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFilters(prev => ({ ...prev, search: e.target.value, offset: 0 }))
-  }
+  // Debounce поиска
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setFilters(prev => ({ ...prev, search: searchInput, offset: 0 }))
+    }, 400)
+    return () => clearTimeout(timer)
+  }, [searchInput])
+
+  const currentPage = Math.floor(filters.offset / filters.limit) + 1
+  const totalPages = total > 0 ? Math.ceil(total / filters.limit) : (companies.length > 0 ? currentPage : 1)
 
   const handleStatusFilter = (status: string) => {
     setFilters(prev => ({ ...prev, status: status === prev.status ? '' : status, offset: 0 }))
@@ -51,7 +79,7 @@ export default function Companies() {
   }
 
   const selectAll = () => {
-    if (selectedCompanies.length === companies.length) {
+    if (selectedCompanies.length === companies.length && companies.length > 0) {
       setSelectedCompanies([])
     } else {
       setSelectedCompanies(companies.map(c => c.id))
@@ -74,15 +102,18 @@ export default function Companies() {
   }
 
   const getStatusBadge = (status: string) => {
-    const statusConfig: Record<string, { variant: 'default' | 'success' | 'warning' | 'info'; label: string }> = {
+    const config: Record<string, { variant: 'default' | 'success' | 'warning' | 'info'; label: string }> = {
       'new': { variant: 'info', label: locale === 'ru' ? 'Новая' : 'New' },
       'verified': { variant: 'success', label: locale === 'ru' ? 'Верифицирована' : 'Verified' },
       'in_progress': { variant: 'warning', label: locale === 'ru' ? 'В работе' : 'In Progress' },
       'rejected': { variant: 'default', label: locale === 'ru' ? 'Отклонена' : 'Rejected' },
     }
-    const config = statusConfig[status] || { variant: 'default' as const, label: status }
-    return <Badge variant={config.variant}>{config.label}</Badge>
+    const { variant, label } = config[status] || { variant: 'default' as const, label: status }
+    return <Badge variant={variant}>{label}</Badge>
   }
+
+  //  Показываем скелетон при загрузке ЛЮБОЙ страницы
+  const showSkeleton = isFetching
 
   return (
     <div className="space-y-6">
@@ -92,12 +123,10 @@ export default function Companies() {
           <h1 className="text-2xl font-bold text-text-primary">{t('companies.title')}</h1>
           <p className="text-text-secondary mt-1">{t('companies.subtitle')}</p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="secondary" size="sm" onClick={() => exportCompaniesReport()}>
-            <Download size={16} className="mr-2" />
-            {t('companies.export')}
-          </Button>
-        </div>
+        <Button variant="secondary" size="sm" onClick={() => {/* export */}}>
+          <Download size={16} className="mr-2" />
+          {t('companies.export')}
+        </Button>
       </div>
 
       {/* Filters */}
@@ -107,13 +136,12 @@ export default function Companies() {
             <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" />
             <input
               type="text"
-              value={filters.search}
-              onChange={handleSearch}
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
               placeholder={t('companies.search')}
               className="w-full pl-10 pr-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-light"
             />
           </div>
-          
           <div className="flex gap-2 flex-wrap">
             {['new', 'verified', 'in_progress'].map((status) => (
               <button
@@ -142,28 +170,15 @@ export default function Companies() {
               {locale === 'ru' ? `Выбрано: ${selectedCompanies.length}` : `Selected: ${selectedCompanies.length}`}
             </span>
             <div className="flex gap-2">
-              <Button 
-                size="sm" 
-                variant="secondary"
-                onClick={() => setIsVerifyModalOpen(true)}
-                disabled={isVerifying}
-              >
+              <Button size="sm" variant="secondary" onClick={() => setIsVerifyModalOpen(true)} disabled={isVerifying}>
                 <CheckCircle2 size={16} className="mr-1" />
                 {locale === 'ru' ? 'Верифицировать' : 'Verify'}
               </Button>
-              <Button 
-                size="sm"
-                onClick={handleScore}
-                disabled={isScoring}
-              >
+              <Button size="sm" onClick={handleScore} disabled={isScoring}>
                 <TrendingUp size={16} className="mr-1" />
                 {locale === 'ru' ? 'Скоринг' : 'Score'}
               </Button>
-              <Button 
-                size="sm" 
-                variant="ghost"
-                onClick={() => setSelectedCompanies([])}
-              >
+              <Button size="sm" variant="ghost" onClick={() => setSelectedCompanies([])}>
                 {locale === 'ru' ? 'Отмена' : 'Cancel'}
               </Button>
             </div>
@@ -171,138 +186,113 @@ export default function Companies() {
         </Card>
       )}
 
-      {/* Companies List */}
+      {/* Companies Table */}
       <Card className="p-0 overflow-hidden">
-        {isLoading ? (
-          <div className="flex items-center justify-center h-64">
-            <Loader2 className="animate-spin text-primary" size={32} />
-          </div>
-        ) : companies.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-64 text-center p-8">
-            <Building2 size={48} className="text-text-secondary mb-4 opacity-30" />
-            <h3 className="text-lg font-semibold text-text-primary mb-2">
-              {locale === 'ru' ? 'Компании не найдены' : 'No companies found'}
-            </h3>
-            <p className="text-text-secondary max-w-md">
-              {locale === 'ru' 
-                ? 'Начните с верификации компаний на вкладке "Анализ индустрии"'
-                : 'Start by verifying companies in the "Industry Analysis" tab'}
-            </p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-slate-50 border-b border-border">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-slate-50 border-b border-border">
+              <tr>
+                <th className="px-4 py-3 text-left w-10">
+                  <input 
+                    type="checkbox" 
+                    checked={companies.length > 0 && selectedCompanies.length === companies.length} 
+                    onChange={selectAll} 
+                    className="rounded border-border" 
+                    disabled={showSkeleton}
+                  />
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-text-secondary uppercase">{t('companies.table.company')}</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-text-secondary uppercase">{t('companies.table.industry')}</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-text-secondary uppercase">{t('companies.table.region')}</th>
+                <th className="px-4 py-3 text-center text-xs font-semibold text-text-secondary uppercase">{t('companies.table.scoring')}</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-text-secondary uppercase">{t('companies.table.status')}</th>
+              </tr>
+            </thead>
+            
+            {showSkeleton ? (
+              <TableSkeleton />
+            ) : companies.length === 0 ? (
+              <tbody>
                 <tr>
-                  <th className="px-4 py-3 text-left">
-                    <input
-                      type="checkbox"
-                      checked={selectedCompanies.length === companies.length && companies.length > 0}
-                      onChange={selectAll}
-                      className="rounded border-border"
-                    />
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-text-secondary uppercase">
-                    {t('companies.table.company')}
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-text-secondary uppercase">
-                    {t('companies.table.industry')}
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-text-secondary uppercase">
-                    {t('companies.table.region')}
-                  </th>
-                  <th className="px-4 py-3 text-center text-xs font-semibold text-text-secondary uppercase">
-                    {t('companies.table.scoring')}
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-text-secondary uppercase">
-                    {t('companies.table.status')}
-                  </th>
+                  <td colSpan={6} className="px-4 py-16 text-center">
+                    <Building2 size={48} className="mx-auto mb-4 text-text-secondary opacity-30" />
+                    <h3 className="text-lg font-semibold text-text-primary mb-2">
+                      {locale === 'ru' ? 'Компании не найдены' : 'No companies found'}
+                    </h3>
+                    <p className="text-text-secondary max-w-md mx-auto">
+                      {locale === 'ru' ? 'Измените параметры поиска или вернитесь позже.' : 'Try adjusting your search or check back later.'}
+                    </p>
+                  </td>
                 </tr>
-              </thead>
+              </tbody>
+            ) : (
               <tbody className="divide-y divide-border">
                 {companies.map((company) => (
-                  <tr 
-                    key={company.id} 
-                    className="hover:bg-slate-50 transition-colors"
-                  >
+                  <tr key={company.id} className="hover:bg-slate-50 transition-colors">
                     <td className="px-4 py-3">
-                      <input
-                        type="checkbox"
-                        checked={selectedCompanies.includes(company.id)}
-                        onChange={() => toggleCompany(company.id)}
-                        className="rounded border-border"
-                      />
+                      <input type="checkbox" checked={selectedCompanies.includes(company.id)} onChange={() => toggleCompany(company.id)} className="rounded border-border" />
                     </td>
                     <td className="px-4 py-3">
-                      <div>
-                        <div className="font-medium text-text-primary">{company.name}</div>
-                        {company.website && (
-                          <a 
-                            href={company.website} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="text-xs text-primary hover:underline flex items-center gap-1 mt-1"
-                          >
-                            <Globe size={12} />
-                            {company.website.replace(/^https?:\/\//, '')}
-                          </a>
-                        )}
-                      </div>
+                      <div className="font-medium text-text-primary">{company.name}</div>
+                      {company.website && (
+                        <a href={company.website} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline flex items-center gap-1 mt-1">
+                          <Globe size={12} />
+                          {company.website.replace(/^https?:\/\//, '')}
+                        </a>
+                      )}
                     </td>
+                    <td className="px-4 py-3 text-sm text-text-secondary">{company.industry || '-'}</td>
                     <td className="px-4 py-3 text-sm text-text-secondary">
-                      {company.industry || '-'}
+                      <div className="flex items-center gap-1"><MapPin size={14} />{company.region || '-'}</div>
                     </td>
-                    <td className="px-4 py-3 text-sm text-text-secondary">
-                      <div className="flex items-center gap-1">
-                        <MapPin size={14} />
-                        {company.region || '-'}
-                      </div>
-                    </td>
+                    
+                    {/*  ИСПРАВЛЕНО: Умножаем score (0–1) на 100 для отображения 0–100 */}
                     <td className="px-4 py-3 text-center">
                       <div className="inline-flex items-center gap-1 px-2 py-1 rounded bg-slate-100 text-sm font-medium">
                         <TrendingUp size={14} className="text-primary" />
-                        {company.score?.toFixed(0) || 0}/100
+                        {Math.round((company.score ?? 0) * 100)}/100
                       </div>
                     </td>
-                    <td className="px-4 py-3">
-                      {getStatusBadge(company.status)}
-                    </td>
+                    
+                    <td className="px-4 py-3">{getStatusBadge(company.status)}</td>
                   </tr>
                 ))}
               </tbody>
-            </table>
+            )}
+          </table>
+        </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between px-4 py-3 border-t border-border bg-slate-50">
+            <span className="text-sm text-text-secondary">
+              {locale === 'ru' 
+                ? `Страница ${currentPage} из ${totalPages} (всего ${total || companies.length})`
+                : `Page ${currentPage} of ${totalPages} (${total || companies.length} total)`}
+            </span>
+            <div className="flex gap-2">
+              <Button 
+                size="sm" 
+                variant="secondary"
+                disabled={currentPage === 1 || isFetching}
+                onClick={() => setFilters(prev => ({ ...prev, offset: Math.max(0, prev.offset - prev.limit) }))}
+              >
+                <ChevronLeft size={16} className="mr-1" />
+                {locale === 'ru' ? 'Назад' : 'Previous'}
+              </Button>
+              <Button 
+                size="sm" 
+                variant="secondary"
+                disabled={currentPage >= totalPages || isFetching}
+                onClick={() => setFilters(prev => ({ ...prev, offset: prev.offset + prev.limit }))}
+              >
+                {locale === 'ru' ? 'Вперёд' : 'Next'}
+                <ChevronRight size={16} className="ml-1" />
+              </Button>
+            </div>
           </div>
         )}
       </Card>
-
-      {/* Pagination Info */}
-      {companies.length > 0 && (
-        <div className="flex items-center justify-between text-sm text-text-secondary">
-          <span>
-            {locale === 'ru' 
-              ? `Показано ${companies.length} из ${total}`
-              : `Showing ${companies.length} of ${total}`}
-          </span>
-          <div className="flex gap-2">
-            <Button 
-              size="sm" 
-              variant="secondary"
-              disabled={filters.offset === 0}
-              onClick={() => setFilters(prev => ({ ...prev, offset: Math.max(0, prev.offset - prev.limit) }))}
-            >
-              {locale === 'ru' ? 'Назад' : 'Previous'}
-            </Button>
-            <Button 
-              size="sm" 
-              variant="secondary"
-              disabled={companies.length < filters.limit}
-              onClick={() => setFilters(prev => ({ ...prev, offset: prev.offset + prev.limit }))}
-            >
-              {locale === 'ru' ? 'Вперёд' : 'Next'}
-            </Button>
-          </div>
-        </div>
-      )}
 
       {/* Verify Modal */}
       <Modal

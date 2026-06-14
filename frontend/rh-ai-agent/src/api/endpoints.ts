@@ -1,13 +1,15 @@
-// 🔥 Импортируем ВСЕ типы из types.ts (включая Chat)
 import apiClient, { chatClient } from './clients'
 import type {
   // Company
   Company,
   CompanyFilters,
   CompaniesResponse,
+  CompanyStatusUpdate,
+  CompanyScoreRequest,
   // Competency
   Competency,
   CompetencyGap,
+  CompetencyItem,
   // Outreach
   OutreachCard,
   FollowUp,
@@ -15,6 +17,7 @@ import type {
   Project,
   // Memory
   MemoryNode,
+  MemoryConnection,
   // Vacancy
   Vacancy,
   PaginatedResponse,
@@ -22,6 +25,7 @@ import type {
   TaskStatus,
   // Dashboard
   DashboardStats,
+  ActivityLog,
   // Notifications
   Notification,
   // Chat (RAG)
@@ -30,6 +34,11 @@ import type {
   ChatRequest,
   ChatResponse,
   SessionsListResponse,
+  ChatStreamChunk,
+  // Industry Analytics
+  IndustryMatrixItem,
+  PriorityArea,
+  PriorityAreaReview,
   // User / Auth
   UserCreate,
   UserRead,
@@ -54,8 +63,11 @@ export const companiesApi = {
   delete: (companyId: number) =>
     apiClient.delete(`/companies/${companyId}`),
 
-  score: (companyIds: number[]) =>
-    apiClient.post<{ task_id: string }>('/companies/score', { company_ids: companyIds }),
+  updateStatus: (companyId: number, data: CompanyStatusUpdate) =>
+    apiClient.patch<Company>(`/companies/${companyId}/status`, data),
+
+  requestScore: (data: CompanyScoreRequest) =>
+    apiClient.post<{ task_id: string }>('/companies/score', data),
 
   verify: (companyIds: number[]) =>
     apiClient.post<{ task_id: string }>('/companies/verify', { company_ids: companyIds }),
@@ -193,7 +205,7 @@ export const notificationsApi = {
     apiClient.post('/notifications/mark-all-read'),
 }
 
-// ==================== TASKS (polling helper) ====================
+// ==================== TASKS ====================
 export const tasksApi = {
   getStatus: (taskId: string) =>
     apiClient.get<TaskStatus>(`/tasks/${taskId}`),
@@ -226,23 +238,67 @@ export const tasksApi = {
 }
 
 // ==================== CHAT (RAG) ====================
-// 🔥 Используем chatClient с увеличенным таймаутом
-// 🔥 Типы импортированы из types.ts — никаких дубликатов!
 export const chatApi = {
-  // Отправить вопрос → получить ответ (или task_id, если асинхронно)
   sendMessage: (data: ChatRequest) =>
     chatClient.post<ChatResponse>('/rag/chat', {
       question: data.question,
       session_id: data.session_id,
     }),
 
-  // Получить список сессий чата
   getSessions: () =>
-    chatClient.get<ChatSession[]>('/rag/sessions'),
+    chatClient.get<SessionsListResponse>('/rag/sessions'),
 
-  // Получить сообщения конкретной сессии
   getMessages: (sessionId: number) =>
     chatClient.get<ChatMessage[]>(`/rag/sessions/${sessionId}/messages`),
+
+  deleteSession: (sessionId: number) =>
+    chatClient.delete(`/rag/sessions/${sessionId}`),
+
+  updateSession: (sessionId: number, title: string) =>
+    chatClient.patch<ChatSession>(`/rag/sessions/${sessionId}`, { title }),
+}
+
+// ==================== INDUSTRY ANALYTICS ====================
+export const industryApi = {
+  //  GET /industry/competencies - список компетенций
+  getCompetencies: (params?: { 
+    source?: 'industry' | 'program',
+    category?: 'hard_skill' | 'tool' | 'soft_skill' | 'methodology',
+    limit?: number 
+  }) =>
+    apiClient.get<PaginatedResponse<CompetencyItem>>('/industry/competencies', { params }),
+
+  //  GET /industry/matrix - матрица компетенций по отраслям
+  getMatrix: () =>
+    apiClient.get<PaginatedResponse<IndustryMatrixItem>>('/industry/matrix'),
+
+  //  POST /industry/analyze - запуск анализа
+  analyze: (batchSize: number = 200) =>
+    apiClient.post<{ 
+      processed_vacancies: number
+      competencies_found: number
+      priority_area_industries: number
+    }>(`/industry/analyze?batch_size=${batchSize}`),
+
+  // GET /industry/priority-areas - список приоритетных областей
+  getPriorityAreas: (status?: 'proposed' | 'approved' | 'rejected') =>
+    apiClient.get<PaginatedResponse<PriorityArea>>('/industry/priority-areas', {
+      params: status ? { status } : undefined,
+    }),
+
+  //  POST /industry/priority-areas/{area_id}/review - модерация
+  reviewPriorityArea: (areaId: number, data: PriorityAreaReview) =>
+    apiClient.post<PriorityArea>(`/industry/priority-areas/${areaId}/review`, data),
+}
+
+export const communicationsApi = {
+  // Получить список типов коммуникаций
+  getTypes: () =>
+    apiClient.get<CommunicationsResponse>('/communications/types'),
+
+  // Сгенерировать текст коммуникации
+  generate: (data: CommunicationGenerateRequest) =>
+    apiClient.post<CommunicationGenerateResponse>('/communications/generate', data),
 }
 
 // ==================== AUTH ====================

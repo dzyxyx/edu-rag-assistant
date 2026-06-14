@@ -18,7 +18,7 @@ export const chatClient = axios.create({
     'Content-Type': 'application/json',
     'Accept': 'application/json',
   },
-  timeout: 600000, 
+  timeout: 300000, 
   withCredentials: false,
 })
 
@@ -69,6 +69,7 @@ chatClient.interceptors.response.use(
         url: error.config?.url,
         status: error.response?.status,
         message: error.message,
+        data: error.response?.data,
       })
     }
     return Promise.reject(error)

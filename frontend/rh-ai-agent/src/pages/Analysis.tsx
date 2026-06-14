@@ -1,172 +1,345 @@
+import { useState, useMemo } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { industryApi } from '@/api/endpoints'
 import { Card } from '@/components/ui/Card'
-import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
-import { useAppStore } from '@/store/useAppStore'
-import { RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend } from 'recharts'
-import { CheckCircle2, AlertTriangle, TrendingUp, ArrowUpRight, Minus } from 'lucide-react'
+import { Button } from '@/components/ui/Button'
+import { 
+  RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, ResponsiveContainer,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend
+} from 'recharts'
+import { TrendingUp, TrendingDown, Minus, BrainCircuit, CheckCircle } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
-const radarData = [
-  { skill: 'Python', market: 95, program: 60 },
-  { skill: 'ML/AI', market: 88, program: 30 },
-  { skill: 'DevOps', market: 72, program: 45 },
-  { skill: 'NLP', market: 65, program: 15 },
-  { skill: 'Backend', market: 80, program: 70 }
-]
-
-const skills = [
-  { name: 'Python', demand: 95, inProgram: 60, trend: 'up' },
-  { name: 'ML/AI', demand: 88, inProgram: 30, trend: 'up' },
-  { name: 'DevOps', demand: 72, inProgram: 45, trend: 'stable' },
-  { name: 'NLP', demand: 65, inProgram: 15, trend: 'up' },
-  { name: 'Backend', demand: 80, inProgram: 70, trend: 'stable' }
-]
-
 export default function Analysis() {
-  const { t } = useTranslation()
-  const { ui, setAnalysisApproved, locale } = useAppStore()
+  const { i18n } = useTranslation()
+  
+  // Загрузка данных
+  const { data: competenciesData, isLoading } = useQuery({
+    queryKey: ['industry', 'competencies', { limit: 500 }],
+    queryFn: () => industryApi.getCompetencies({ limit: 500 }).then(res => res.data),
+    staleTime: 5 * 60 * 1000,
+  })
+
+  const { data: matrixData } = useQuery({
+    queryKey: ['industry', 'matrix'],
+    queryFn: () => industryApi.getMatrix().then(res => res.data),
+    staleTime: 5 * 60 * 1000,
+  })
+
+  const competencies = competenciesData?.items || []
+  const matrixItems = matrixData?.items || []
+
+  //  Подготовка данных для Radar Chart (Профиль компетенций)
+  const radarData = useMemo(() => {
+  // Разделяем компетенции по источникам
+    const industryComps = competencies.filter(c => c.source === 'industry')
+    const programComps = competencies.filter(c => c.source === 'program')
+  
+  // Берём топ-6 по востребованности на рынке
+    const topIndustry = industryComps
+      .sort((a, b) => b.demand_score - a.demand_score)
+      .slice(0, 6)
+  
+    return topIndustry.map(indComp => {
+    // Ищем соответствующую компетенцию из программы
+      const progComp = programComps.find(pc => 
+        pc.name.toLowerCase() === indComp.name.toLowerCase() &&
+        pc.category === indComp.category
+      )
+    
+      return {
+        subject: indComp.name,
+        'Рынок': Math.round(indComp.demand_score * 100),
+        'Программа': progComp ? Math.round(progComp.demand_score * 100) : 0,
+        fullMark: 100,
+      }
+    })
+  }, [competencies])
+  //  Подготовка данных для Gap Analysis
+  const gapData = useMemo(() => {
+    const industryComps = competencies.filter(c => c.source === 'industry')
+    const programComps = competencies.filter(c => c.source === 'program')
+  
+    const topIndustry = industryComps
+      .sort((a, b) => b.demand_score - a.demand_score)
+      .slice(0, 6)
+  
+    return topIndustry.map(indComp => {
+      const progComp = programComps.find(pc => 
+        pc.name.toLowerCase() === indComp.name.toLowerCase() &&
+        pc.category === indComp.category
+      )
+    
+      const marketDemand = Math.round(indComp.demand_score * 100)
+      const programCoverage = progComp ? Math.round(progComp.demand_score * 100) : 0
+    
+      return {
+        name: indComp.name,
+        'Рынок': marketDemand,
+        'Программа': programCoverage,
+        gap: marketDemand - programCoverage,
+      }
+    })
+  }, [competencies])
+
+  //  Данные для таблицы (детализация по навыкам)
+  const tableData = useMemo(() => {
+    const industryComps = competencies.filter(c => c.source === 'industry')
+    const programComps = competencies.filter(c => c.source === 'program')
+  
+    return industryComps
+      .sort((a, b) => b.demand_score - a.demand_score)
+      .slice(0, 6)
+      .map(indComp => {
+        const progComp = programComps.find(pc => 
+          pc.name.toLowerCase() === indComp.name.toLowerCase() &&
+          pc.category === indComp.category
+        )
+      
+        const marketDemand = Math.round(indComp.demand_score * 100)
+        const programCoverage = progComp ? Math.round(progComp.demand_score * 100) : 0
+      
+      // Определяем тренд на основе frequency
+        let trend: 'growing' | 'stable' | 'declining' = 'stable'
+        if (indComp.frequency > 50) trend = 'growing'
+        else if (indComp.frequency < 20) trend = 'declining'
+      
+        return {
+          skill: indComp.name,
+          category: indComp.category,
+          demand: marketDemand,
+          program: programCoverage,
+          gap: marketDemand - programCoverage,
+          trend,
+          frequency: indComp.frequency,
+        }
+      })
+  }, [competencies])
+
+  const getTrendBadge = (trend: string) => {
+    const config = {
+      'growing': { icon: TrendingUp, color: 'text-green-600', bg: 'bg-green-50', label: 'Растёт' },
+      'declining': { icon: TrendingDown, color: 'text-red-600', bg: 'bg-red-50', label: 'Падает' },
+      'stable': { icon: Minus, color: 'text-slate-600', bg: 'bg-slate-50', label: 'Стабильно' },
+    }
+    const { icon: Icon, color, bg, label } = config[trend as keyof typeof config] || config.stable
+    
+    return (
+      <Badge variant="secondary" className={`${bg} ${color} border-0 gap-1`}>
+        <Icon size={12} />
+        {label}
+      </Badge>
+    )
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    )
+  }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 px-4 md:px-6 max-w-[1600px] mx-auto">
+      {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-text-primary">{t('analysis.title')}</h1>
-          <p className="text-text-secondary mt-1">{t('analysis.subtitle')}</p>
+          <h1 className="text-2xl font-bold text-text-primary">Анализ индустрии и компетенций</h1>
+          <p className="text-text-secondary mt-1 text-sm">
+            Фаза 1. Сравнение учебной программы с требованиями рынка
+          </p>
         </div>
-        {!ui.analysisApproved ? (
-          <Button onClick={() => setAnalysisApproved(true)} className="bg-amber-500 hover:bg-amber-600 text-white">
-            <AlertTriangle size={16} className="mr-2" />
-            {t('analysis.approve')}
-          </Button>
-        ) : (
-          <Badge variant="success" className="flex items-center gap-1 px-3 py-1">
-            <CheckCircle2 size={14} /> {locale === 'ru' ? 'Стратегия утверждена' : 'Strategy Approved'}
-          </Badge>
-        )}
+        <Button variant="primary" size="sm" className="gap-2">
+          <BrainCircuit size={16} />
+          Проверить выводы агента
+        </Button>
       </div>
 
+      {/* Top Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <h3 className="font-semibold text-text-primary mb-4">{t('analysis.profileTitle')}</h3>
-          <div className="h-72">
+        {/*  Профиль компетенций (Radar Chart) */}
+        <Card className="p-6">
+          <h3 className="text-lg font-semibold text-text-primary mb-6">Профиль компетенций</h3>
+          <div className="h-[320px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <RadarChart data={radarData}>
-                <PolarGrid stroke="#E2E8F0" />
-                <PolarAngleAxis dataKey="skill" tick={{ fill: '#64748B', fontSize: 12 }} />
-                <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
-                <Radar name={locale === 'ru' ? 'Рынок' : 'Market'} dataKey="market" stroke="#020817" fill="#020817" fillOpacity={0.8} />
-                <Radar name={locale === 'ru' ? 'Программа' : 'Program'} dataKey="program" stroke="#F59E0B" fill="#F59E0B" fillOpacity={0.5} />
-                <Legend wrapperStyle={{ fontSize: 12, paddingTop: 10 }} />
+              <RadarChart cx="50%" cy="50%" outerRadius="80%" data={radarData}>
+                <PolarGrid stroke="#e2e8f0" />
+                <PolarAngleAxis 
+                  dataKey="subject" 
+                  tick={{ fill: '#64748b', fontSize: 11 }}
+                  tickLine={false}
+                  axisLine={false}
+                />
+                <PolarRadiusAxis 
+                  angle={90} 
+                  domain={[0, 100]} 
+                  tick={{ fill: '#64748b', fontSize: 10 }}
+                  tickLine={false}
+                  axisLine={false}
+                />
+                <Radar
+                  name="Рынок"
+                  dataKey="Рынок"
+                  stroke="#0ea5e9"
+                  strokeWidth={2}
+                  fill="#0ea5e9"
+                  fillOpacity={0.3}
+                />
+                <Radar
+                  name="Программа"
+                  dataKey="Программа"
+                  stroke="#f59e0b"
+                  strokeWidth={2}
+                  fill="#f59e0b"
+                  fillOpacity={0.3}
+                />
+                <Legend 
+                  verticalAlign="bottom" 
+                  height={36}
+                  iconType="circle"
+                  formatter={(value) => <span className="text-xs text-slate-600 ml-2">{value}</span>}
+                />
+                <RechartsTooltip 
+                  contentStyle={{ 
+                    borderRadius: '8px', 
+                    border: '1px solid #e2e8f0',
+                    fontSize: '12px',
+                    backgroundColor: 'white'
+                  }}
+                />
               </RadarChart>
             </ResponsiveContainer>
           </div>
         </Card>
 
-        <Card>
-          <h3 className="font-semibold text-text-primary mb-4">{t('analysis.gapTitle')}</h3>
-          <div className="h-72">
+        {/*  Разрыв компетенций (Gap Analysis) */}
+        <Card className="p-6">
+          <h3 className="text-lg font-semibold text-text-primary mb-6">Разрыв компетенций (Gap Analysis)</h3>
+          <div className="h-[320px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={radarData} barCategoryGap="40%">
-                <XAxis dataKey="skill" axisLine={false} tickLine={false} tick={{ fill: '#64748B', fontSize: 12 }} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748B', fontSize: 12 }} domain={[0, 100]} />
-                <Tooltip contentStyle={{ borderRadius: 8, border: '1px solid #E2E8F0' }} />
-                <Bar dataKey="market" fill="#020817" radius={[4, 4, 0, 0]} name={locale === 'ru' ? 'Рынок' : 'Market'} />
-                <Bar dataKey="program" fill="#CBD5E1" radius={[4, 4, 0, 0]} name={locale === 'ru' ? 'В программе' : 'In Program'} />
+              <BarChart data={gapData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                <XAxis 
+                  dataKey="name" 
+                  tick={{ fill: '#64748b', fontSize: 11 }}
+                  axisLine={false}
+                  tickLine={false}
+                  interval={0}
+                  angle={-15}
+                  textAnchor="end"
+                  height={60}
+                />
+                <YAxis 
+                  tick={{ fill: '#64748b', fontSize: 10 }}
+                  axisLine={false}
+                  tickLine={false}
+                  width={30}
+                />
+                <RechartsTooltip 
+                  contentStyle={{ 
+                    borderRadius: '8px', 
+                    border: '1px solid #e2e8f0',
+                    fontSize: '12px',
+                    backgroundColor: 'white'
+                  }}
+                  cursor={{ fill: '#f1f5f9' }}
+                />
+                <Legend 
+                  verticalAlign="bottom" 
+                  height={36}
+                  iconType="rect"
+                  formatter={(value) => <span className="text-xs text-slate-600 ml-2">{value}</span>}
+                />
+                <Bar 
+                  name="Рынок" 
+                  dataKey="Рынок" 
+                  fill="#1e293b" 
+                  radius={[4, 4, 0, 0]}
+                  barSize={32}
+                />
+                <Bar 
+                  name="Программа" 
+                  dataKey="Программа" 
+                  fill="#cbd5e1" 
+                  radius={[4, 4, 0, 0]}
+                  barSize={32}
+                />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </Card>
       </div>
 
-      {!ui.analysisApproved && (
-        <Card className="bg-amber-50/50 border-amber-200">
-          <div className="flex items-start gap-4">
-            <div className="p-3 bg-amber-100 rounded-full text-amber-600">
-              <AlertTriangle size={24} />
-            </div>
-            <div className="flex-1">
-              <h3 className="text-lg font-bold text-text-primary mb-2">{t('analysis.alert.title')}</h3>
-              <p className="text-text-secondary mb-4">
-                {t('analysis.alert.message')}
-              </p>
-              <div className="flex gap-3">
-                <Button onClick={() => setAnalysisApproved(true)} className="bg-amber-500 hover:bg-amber-600 text-white">
-                  {t('analysis.alert.approveBtn')}
-                </Button>
-                <Button variant="secondary">{t('analysis.alert.adjustBtn')}</Button>
-              </div>
-            </div>
-          </div>
-        </Card>
-      )}
-      
-      {ui.analysisApproved && (
-         <Card>
-           <h3 className="font-semibold text-text-primary mb-4">{t('analysis.artifact.title')}</h3>
-           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-             <div className="p-3 bg-slate-50 rounded-lg">
-               <p className="text-xs text-text-secondary">{t('analysis.artifact.industry')}</p>
-               <p className="font-bold text-text-primary">IT / ML</p>
-             </div>
-             <div className="p-3 bg-slate-50 rounded-lg">
-               <p className="text-xs text-text-secondary">{t('analysis.artifact.skills')}</p>
-               <p className="font-bold text-text-primary">Python, PyTorch</p>
-             </div>
-             <div className="p-3 bg-slate-50 rounded-lg">
-               <p className="text-xs text-text-secondary">{t('analysis.artifact.niche')}</p>
-               <p className="font-bold text-text-primary">NARS, RFT</p>
-             </div>
-             <div className="p-3 bg-slate-50 rounded-lg">
-               <p className="text-xs text-text-secondary">{t('analysis.artifact.region')}</p>
-               <p className="font-bold text-text-primary">{locale === 'ru' ? 'Москва, ЕКБ' : 'Moscow, EKB'}</p>
-             </div>
-           </div>
-         </Card>
-      )}
-
-      <Card>
-        <h3 className="font-semibold text-text-primary mb-4">{t('analysis.detailsTitle')}</h3>
+      {/*  Детализация по навыкам (Table) */}
+      <Card className="p-6">
+        <h3 className="text-lg font-semibold text-text-primary mb-6">Детализация по навыкам</h3>
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full">
             <thead>
-              <tr className="border-b border-border text-left">
-                <th className="pb-3 font-medium text-text-secondary">{t('analysis.skill')}</th>
-                <th className="pb-3 font-medium text-text-secondary">{t('analysis.demand')}</th>
-                <th className="pb-3 font-medium text-text-secondary">{t('analysis.inProgram')}</th>
-                <th className="pb-3 font-medium text-text-secondary">{t('analysis.trend')}</th>
+              <tr className="border-b border-border">
+                <th className="text-left py-3 px-4 text-xs font-semibold text-text-secondary uppercase">Навык</th>
+                <th className="text-left py-3 px-4 text-xs font-semibold text-text-secondary uppercase w-[200px]">Востребованность</th>
+                <th className="text-left py-3 px-4 text-xs font-semibold text-text-secondary uppercase w-[200px]">В программе</th>
+                <th className="text-left py-3 px-4 text-xs font-semibold text-text-secondary uppercase w-[120px]">Тренд</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {skills.map((s) => (
-                <tr key={s.name}>
-                  <td className="py-3 font-medium text-text-primary">{s.name}</td>
-                  <td className="py-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-24 h-2 bg-slate-100 rounded-full overflow-hidden">
-                        <div className="h-full bg-text-primary rounded-full" style={{ width: `${s.demand}%` }} />
-                      </div>
-                      <span className="text-text-secondary">{s.demand}%</span>
+              {tableData.map((row, index) => (
+                <tr key={index} className="hover:bg-slate-50/50 transition-colors">
+                  <td className="py-4 px-4">
+                    <div>
+                      <p className="font-medium text-text-primary text-sm">{row.skill}</p>
+                      <p className="text-xs text-text-secondary mt-0.5">{row.category}</p>
                     </div>
                   </td>
-                  <td className="py-3">
+                  <td className="py-4 px-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-24 h-2 bg-slate-100 rounded-full overflow-hidden">
-                        <div className="h-full bg-primary rounded-full" style={{ width: `${s.inProgram}%` }} />
+                      <div className="flex-1 max-w-[120px]">
+                        <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-slate-800 rounded-full transition-all"
+                            style={{ width: `${row.demand}%` }}
+                          />
+                        </div>
                       </div>
-                      <span className="text-text-secondary">{s.inProgram}%</span>
+                      <span className="text-sm font-medium text-text-primary w-12 text-right">
+                        {row.demand}%
+                      </span>
                     </div>
                   </td>
-                  <td className="py-3">
-                    <Badge variant={s.trend === 'up' ? 'success' : 'default'} className="flex items-center gap-1 w-fit">
-                      {s.trend === 'up' ? <ArrowUpRight size={12} /> : <Minus size={12} />}
-                      {s.trend === 'up' ? t('analysis.growing') : t('analysis.stable')}
-                    </Badge>
+                  <td className="py-4 px-4">
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1 max-w-[120px]">
+                        <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
+                          <div 
+                            className={`h-full rounded-full transition-all ${
+                              row.gap > 20 ? 'bg-blue-500' : 'bg-blue-300'
+                            }`}
+                            style={{ width: `${row.program}%` }}
+                          />
+                        </div>
+                      </div>
+                      <span className="text-sm font-medium text-text-primary w-12 text-right">
+                        {row.program}%
+                      </span>
+                    </div>
+                  </td>
+                  <td className="py-4 px-4">
+                    {getTrendBadge(row.trend)}
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
+        
+        {tableData.length === 0 && (
+          <div className="text-center py-12 text-text-secondary">
+            <p>Нет данных для отображения</p>
+          </div>
+        )}
       </Card>
     </div>
   )
