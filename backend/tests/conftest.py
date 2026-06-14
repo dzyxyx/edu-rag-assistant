@@ -39,6 +39,14 @@ async def setup_db():
         await conn.run_sync(Base.metadata.drop_all)
 
 
+@pytest.fixture(autouse=True)
+def _force_mock_llm(monkeypatch):
+    """Юнит-тесты не должны зависеть от реальных Chroma/Ollama: независимо от
+    значения MOCK_LLM в .env, в тестовом окружении принудительно включаем
+    режим заглушки (см. test_health_metrics.py и app/services/rag/chain.py)."""
+    monkeypatch.setattr(settings, "MOCK_LLM", True)
+
+
 @pytest_asyncio.fixture
 async def db_session():
     async with TestSessionLocal() as session:
