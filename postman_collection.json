@@ -6,13 +6,46 @@
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
-    { "key": "base_url", "value": "http://localhost:8000/api/v1" },
-    { "key": "access_token", "value": "" },
-    { "key": "session_id", "value": "" },
-    { "key": "company_id", "value": "" },
-    { "key": "priority_area_id", "value": "" },
-    { "key": "test_email", "value": "tester@example.com" },
-    { "key": "test_password", "value": "secret123" }
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000/api/v1"
+    },
+    {
+      "key": "access_token",
+      "value": ""
+    },
+    {
+      "key": "session_id",
+      "value": ""
+    },
+    {
+      "key": "company_id",
+      "value": ""
+    },
+    {
+      "key": "priority_area_id",
+      "value": ""
+    },
+    {
+      "key": "test_email",
+      "value": "tester@example.com"
+    },
+    {
+      "key": "test_password",
+      "value": "secret123"
+    },
+    {
+      "key": "campaign_id",
+      "value": ""
+    },
+    {
+      "key": "event_id",
+      "value": ""
+    },
+    {
+      "key": "memory_id",
+      "value": ""
+    }
   ],
   "item": [
     {
@@ -22,7 +55,12 @@
           "name": "Register",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "url": "{{base_url}}/auth/register",
             "body": {
               "mode": "raw",
@@ -46,7 +84,12 @@
           "name": "Login",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "url": "{{base_url}}/auth/login",
             "body": {
               "mode": "raw",
@@ -73,7 +116,12 @@
           "name": "Me",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
             "url": "{{base_url}}/auth/me"
           },
           "event": [
@@ -100,8 +148,14 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
             ],
             "url": "{{base_url}}/rag/chat",
             "body": {
@@ -135,8 +189,14 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
             ],
             "url": "{{base_url}}/rag/chat",
             "body": {
@@ -167,8 +227,14 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
             ],
             "url": "{{base_url}}/rag/chat",
             "body": {
@@ -194,7 +260,12 @@
           "name": "Chat - без токена (ожидаем 401)",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "url": "{{base_url}}/rag/chat",
             "body": {
               "mode": "raw",
@@ -217,8 +288,14 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
             ],
             "url": "{{base_url}}/rag/chat",
             "body": {
@@ -241,7 +318,12 @@
           "name": "Список сессий",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
             "url": "{{base_url}}/rag/sessions"
           },
           "event": [
@@ -265,7 +347,12 @@
           "name": "Сообщения сессии",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
             "url": "{{base_url}}/rag/sessions/{{session_id}}/messages"
           },
           "event": [
@@ -295,14 +382,29 @@
           "name": "Список компаний",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
             "url": {
               "raw": "{{base_url}}/companies?limit=20&offset=0",
-              "host": ["{{base_url}}"],
-              "path": ["companies"],
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "companies"
+              ],
               "query": [
-                { "key": "limit", "value": "20" },
-                { "key": "offset", "value": "0" }
+                {
+                  "key": "limit",
+                  "value": "20"
+                },
+                {
+                  "key": "offset",
+                  "value": "0"
+                }
               ]
             }
           },
@@ -329,7 +431,12 @@
           "name": "Карточка компании",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
             "url": "{{base_url}}/companies/{{company_id}}"
           },
           "event": [
@@ -349,7 +456,12 @@
           "name": "Пересчёт скоринга компании",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
             "url": "{{base_url}}/companies/{{company_id}}/score"
           },
           "event": [
@@ -370,8 +482,14 @@
           "request": {
             "method": "PATCH",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
             ],
             "url": "{{base_url}}/companies/{{company_id}}/status",
             "body": {
@@ -401,12 +519,27 @@
           "name": "Компетенции",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
             "url": {
               "raw": "{{base_url}}/industry/competencies?limit=50",
-              "host": ["{{base_url}}"],
-              "path": ["industry", "competencies"],
-              "query": [{ "key": "limit", "value": "50" }]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "industry",
+                "competencies"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "50"
+                }
+              ]
             }
           },
           "event": [
@@ -429,7 +562,12 @@
           "name": "Матрица компетенций по отраслям",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
             "url": "{{base_url}}/industry/matrix"
           },
           "event": [
@@ -447,12 +585,27 @@
           "name": "Запустить NLP-анализ (analyze)",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
             "url": {
               "raw": "{{base_url}}/industry/analyze?batch_size=50",
-              "host": ["{{base_url}}"],
-              "path": ["industry", "analyze"],
-              "query": [{ "key": "batch_size", "value": "50" }]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "industry",
+                "analyze"
+              ],
+              "query": [
+                {
+                  "key": "batch_size",
+                  "value": "50"
+                }
+              ]
             }
           },
           "event": [
@@ -475,12 +628,27 @@
           "name": "Приоритетные области (proposed)",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
             "url": {
               "raw": "{{base_url}}/industry/priority-areas?status=proposed",
-              "host": ["{{base_url}}"],
-              "path": ["industry", "priority-areas"],
-              "query": [{ "key": "status", "value": "proposed" }]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "industry",
+                "priority-areas"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "proposed"
+                }
+              ]
             }
           },
           "event": [
@@ -503,8 +671,14 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
             ],
             "url": "{{base_url}}/industry/priority-areas/{{priority_area_id}}/review",
             "body": {
@@ -520,6 +694,604 @@
                   "pm.test('200 OK или 404 (если priority_area_id пуст)', function () {",
                   "    pm.expect([200, 404, 422]).to.include(pm.response.code);",
                   "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "5. Agent Memory & Outreach (Sprint 4)",
+      "item": [
+        {
+          "name": "Outreach - создать кампанию",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": "{{base_url}}/outreach/campaigns",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Тестовая кампания Sprint 4\",\n  \"description\": \"Postman smoke test\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "const data = pm.response.json();",
+                  "pm.test('campaign имеет id и name', function () {",
+                  "    pm.expect(data).to.have.property('id');",
+                  "    pm.expect(data).to.have.property('name');",
+                  "});",
+                  "pm.collectionVariables.set('campaign_id', data.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Outreach - сгенерировать черновик (LangGraph + память)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": "{{base_url}}/outreach/campaigns/{{campaign_id}}/generate",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"company_ids\": [{{company_id}}],\n  \"tone\": \"formal\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "const data = pm.response.json();",
+                  "pm.test('структура generated/failed', function () {",
+                  "    pm.expect(data).to.have.property('generated');",
+                  "    pm.expect(data).to.have.property('failed');",
+                  "});",
+                  "pm.test('хотя бы один черновик сгенерирован', function () {",
+                  "    pm.expect(data.generated).to.be.above(0);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Outreach - список событий кампании",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/outreach/events?campaign_id={{campaign_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "outreach",
+                "events"
+              ],
+              "query": [
+                {
+                  "key": "campaign_id",
+                  "value": "{{campaign_id}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "const data = pm.response.json();",
+                  "pm.test('структура items/total', function () {",
+                  "    pm.expect(data).to.have.property('items');",
+                  "    pm.expect(data).to.have.property('total');",
+                  "});",
+                  "if (data.items.length > 0) {",
+                  "    const ev = data.items[0];",
+                  "    pm.test('событие содержит confidence_score, memory_used_count, status', function () {",
+                  "        pm.expect(ev).to.have.property('confidence_score');",
+                  "        pm.expect(ev).to.have.property('memory_used_count');",
+                  "        pm.expect(['draft', 'approved', 'escalated', 'sent']).to.include(ev.status);",
+                  "    });",
+                  "    pm.collectionVariables.set('event_id', ev.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Outreach - утвердить черновик (FR-3.5)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": "{{base_url}}/outreach/events/{{event_id}}/approve"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK или 404 если event_id не задан', function () {",
+                  "    pm.expect([200, 404]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Memory - список записей памяти",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/memory?limit=20",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "memory"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "const data = pm.response.json();",
+                  "pm.test('структура items/total', function () {",
+                  "    pm.expect(data).to.have.property('items');",
+                  "    pm.expect(data).to.have.property('total');",
+                  "});",
+                  "if (data.items.length > 0) {",
+                  "    pm.collectionVariables.set('memory_id', data.items[0].id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Memory - детали записи",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": "{{base_url}}/memory/{{memory_id}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK или 404 если memory_id не задан', function () {",
+                  "    pm.expect([200, 404]).to.include(pm.response.code);",
+                  "});",
+                  "if (pm.response.code === 200) {",
+                  "    const data = pm.response.json();",
+                  "    pm.test('запись содержит memory_type/phase/content', function () {",
+                  "        pm.expect(data).to.have.property('memory_type');",
+                  "        pm.expect(data).to.have.property('phase');",
+                  "        pm.expect(data).to.have.property('content');",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Memory - граф связей по компании",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/memory/graph?company_id={{company_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "memory",
+                "graph"
+              ],
+              "query": [
+                {
+                  "key": "company_id",
+                  "value": "{{company_id}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "const data = pm.response.json();",
+                  "pm.test('структура nodes/edges', function () {",
+                  "    pm.expect(data).to.have.property('nodes');",
+                  "    pm.expect(data).to.have.property('edges');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Memory - журнал аудита (AgentAuditLog)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/memory/audit-log?limit=20",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "memory",
+                "audit-log"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "const data = pm.response.json();",
+                  "pm.test('структура items/total', function () {",
+                  "    pm.expect(data).to.have.property('items');",
+                  "    pm.expect(data).to.have.property('total');",
+                  "});",
+                  "if (data.items.length > 0) {",
+                  "    pm.test('есть action outreach.draft_generated', function () {",
+                  "        const actions = data.items.map(i => i.action);",
+                  "        pm.expect(actions).to.include('outreach.draft_generated');",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "6. Communications (Sprint 5)",
+      "item": [
+        {
+          "name": "Список типов коммуникаций",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": "{{base_url}}/communications/types"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "const data = pm.response.json();",
+                  "pm.test('содержит ожидаемые типы', function () {",
+                  "    const types = data.items.map(i => i.type);",
+                  "    ['outreach','follow_up','rejection','project_invitation','notification'].forEach(t => {",
+                  "        pm.expect(types).to.include(t);",
+                  "    });",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Генерация - outreach (с учётом памяти)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": "{{base_url}}/communications/generate",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"outreach\",\n  \"company_id\": \"{{company_id}}\",\n  \"tone\": \"formal\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "const data = pm.response.json();",
+                  "pm.test('содержит subject/body', function () {",
+                  "    pm.expect(data).to.have.property('subject');",
+                  "    pm.expect(data).to.have.property('body');",
+                  "    pm.expect(data.type).to.eql('outreach');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Генерация - follow_up",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": "{{base_url}}/communications/generate",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"follow_up\",\n  \"company_id\": \"{{company_id}}\",\n  \"tone\": \"formal\",\n  \"previous_subject\": \"Предложение о сотрудничестве от УрФУ\",\n  \"follow_up_number\": 1\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "const data = pm.response.json();",
+                  "pm.test('тип follow_up', function () { pm.expect(data.type).to.eql('follow_up'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Генерация - rejection",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": "{{base_url}}/communications/generate",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"rejection\",\n  \"company_id\": \"{{company_id}}\",\n  \"tone\": \"formal\",\n  \"reason\": \"не подходит по профилю стажировок\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "const data = pm.response.json();",
+                  "pm.test('тип rejection', function () { pm.expect(data.type).to.eql('rejection'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Генерация - project_invitation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": "{{base_url}}/communications/generate",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"project_invitation\",\n  \"company_id\": \"{{company_id}}\",\n  \"tone\": \"informal\",\n  \"project_name\": \"Платформа для аналитики вакансий\",\n  \"project_description\": \"Веб-сервис на FastAPI + React для анализа рынка труда\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "const data = pm.response.json();",
+                  "pm.test('тип project_invitation', function () { pm.expect(data.type).to.eql('project_invitation'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Генерация - notification (без компании)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": "{{base_url}}/communications/generate",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"notification\",\n  \"recipient_role\": \"менеджер по партнёрствам\",\n  \"message\": \"Новая компания требует ручного approve\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "const data = pm.response.json();",
+                  "pm.test('company_id отсутствует', function () { pm.expect(data.company_id).to.eql(null); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Генерация - без company_id (ожидаем 422)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": "{{base_url}}/communications/generate",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"follow_up\",\n  \"tone\": \"formal\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('422 Unprocessable Entity', function () { pm.response.to.have.status(422); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Генерация - несуществующая компания (ожидаем 404)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": "{{base_url}}/communications/generate",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"rejection\",\n  \"company_id\": 999999,\n  \"reason\": \"тест\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('404 Not Found', function () { pm.response.to.have.status(404); });"
                 ]
               }
             }

@@ -14,8 +14,27 @@ from app.db.models.chat import ChatMessage, ChatSession
 from app.db.models.user import User
 from app.db.repositories.user import UserRepository
 from app.db.session import get_db, get_db_context
+from app.services.memory.memory_service import MemoryService
 from app.services.rag.chain import HISTORY_MAX_MESSAGES, build_rag_chain
 from app.services.rag.market_context import build_market_context, is_market_question
+
+
+async def _save_chat_memory(db: AsyncSession, question: str, answer: str) -> None:
+    """
+    Лёгкое сохранение взаимодействия RAG-чата в долгосрочную память агента (FR-6.1).
+    Без отдельного LangGraph-графа — просто запись memory_type=interaction, phase=rag_chat.
+    Ошибки не должны прерывать чат.
+    """
+    try:
+        service = MemoryService(db)
+        await service.save_memory(
+            memory_type="interaction",
+            phase="rag_chat",
+            content=f"Вопрос: {question}\nОтвет: {answer}",
+            summary=question[:300],
+        )
+    except Exception:
+        logger.exception("_save_chat_memory: не удалось сохранить память для RAG-чата")
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -97,6 +116,7 @@ async def chat(
         sources=json.dumps(sources, ensure_ascii=False),
     )
     db.add(bot_msg)
+    await _save_chat_memory(db, req.question, answer)
     await db.commit()
     await db.refresh(bot_msg)
 
@@ -266,6 +286,8 @@ async def chat_ws(
                     sources=json.dumps(sources, ensure_ascii=False),
                 )
                 db.add(bot_msg)
+                if answer:
+                    await _save_chat_memory(db, question, answer)
                 await db.commit()
 
             await websocket.send_text("[DONE]")

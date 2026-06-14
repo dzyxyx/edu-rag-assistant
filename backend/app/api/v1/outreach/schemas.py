@@ -38,6 +38,8 @@ class EventOut(BaseModel):
     tone: str | None
     reply_category: str | None
     follow_up_number: int
+    confidence_score: float | None = None
+    memory_used_count: int = 0
     created_at: datetime
 
     model_config = {"from_attributes": True}

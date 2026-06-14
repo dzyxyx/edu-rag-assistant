@@ -115,5 +115,8 @@ class Settings(BaseSettings):
     # Rate limiting
     RATE_LIMIT_PER_MINUTE: int = 60
 
+    # Agent memory / outreach graph (Sprint 4)
+    OUTREACH_CONFIDENCE_THRESHOLD: float = 0.6  # ниже — письмо уходит на ESCALATED
+
 
 settings = Settings()

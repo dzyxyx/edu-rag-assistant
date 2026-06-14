@@ -48,15 +48,20 @@ class OutreachRepository:
         subject: str,
         body: str,
         tone: str = "formal",
+        status: str = OutreachStatus.DRAFT,
+        confidence_score: float | None = None,
+        memory_used_count: int = 0,
     ) -> OutreachEvent:
         obj = OutreachEvent(
             campaign_id=campaign_id,
             company_id=company_id,
             channel="email",
-            status=OutreachStatus.DRAFT,
+            status=status,
             subject=subject,
             body=body,
             tone=tone,
+            confidence_score=confidence_score,
+            memory_used_count=memory_used_count,
         )
         self._s.add(obj)
         await self._s.flush()

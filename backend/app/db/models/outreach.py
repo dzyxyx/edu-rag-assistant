@@ -1,6 +1,6 @@
 from enum import StrEnum
 
-from sqlalchemy import ForeignKey, Integer, String, Text
+from sqlalchemy import Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
@@ -59,6 +59,11 @@ class OutreachEvent(Base):
     # Follow-up
     follow_up_number: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     next_follow_up_after_days: Mapped[int | None] = mapped_column(Integer, nullable=True)
+
+    # Agent memory / LangGraph (Sprint 4): уверенность агента в сгенерированном письме
+    # и количество записей памяти, использованных при генерации.
+    confidence_score: Mapped[float | None] = mapped_column(Float, nullable=True)
+    memory_used_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 
     def __repr__(self) -> str:
         return f"<OutreachEvent id={self.id} company_id={self.company_id} status={self.status}>"
