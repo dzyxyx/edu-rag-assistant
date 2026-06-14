@@ -21,6 +21,7 @@ export interface Company {
   score_scale: number
   score_reputation: number
   score_edu_experience: number
+  score_vacancy_activity: number | null
   status: string
   source: string
   created_at: string
@@ -47,6 +48,24 @@ export interface CompanyStatusUpdate {
 
 export interface CompanyScoreRequest {
   company_ids: number[]
+}
+
+export interface ScoreHistory {
+  id: number
+  score: number
+  score_tech_stack: number
+  score_scale: number
+  score_reputation: number
+  score_edu_experience: number
+  score_vacancy_activity: number | null
+  priority_bonus: number
+  trigger: 'manual' | 'scheduled'
+  created_at: string
+}
+
+export interface ScoreHistoryResponse {
+  total: number
+  items: ScoreHistory[]
 }
 
 // ==================== COMPETENCY ====================
@@ -461,4 +480,66 @@ export interface ProjectsFilters {
   partner_company_id?: number
   limit?: number
   offset?: number
+}
+
+// ==================== COMPANY CREATE/IMPORT ====================
+
+export interface CompanyCreate {
+  name: string
+  inn?: string
+  website?: string
+  description?: string
+  industry?: string
+  region?: string
+  employee_count?: number
+  email?: string
+  phone?: string
+  linkedin_url?: string
+}
+
+export interface CompanyImportItem {
+  name: string
+  inn?: string
+  website?: string
+  description?: string
+  industry?: string
+  region?: string
+  employee_count?: number
+  email?: string
+  phone?: string
+  linkedin_url?: string
+}
+
+export interface CompanyImportRequest {
+  items: CompanyImportItem[]
+}
+
+export interface CompanyImportResponse {
+  total: number
+  created: number
+  updated: number
+  log_id: number
+}
+
+// ==================== INGEST LOGS ====================
+
+export interface IngestLog {
+  id: number
+  source: string
+  trigger: string
+  status: 'running' | 'success' | 'failed'
+  started_at: string
+  finished_at?: string
+  companies_created: number
+  companies_updated: number
+  vacancies_created: number
+  vacancies_updated: number
+  skipped_duplicates: number
+  errors_count: number
+  error_message?: string | null
+}
+
+export interface IngestLogsResponse {
+  total: number
+  items: IngestLog[]
 }

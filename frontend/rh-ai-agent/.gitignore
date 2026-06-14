@@ -53,7 +53,7 @@ dist/
 .vite/
 .eslintcache
 .stylelintcache
-
+node_modules
 # ================= Docker / Инфраструктура =================
 # Локальные тома данных (если создаются в корне)
 postgres_data/

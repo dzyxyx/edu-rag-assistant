@@ -63,20 +63,50 @@ export const companiesApi = {
   delete: (companyId: number) =>
     apiClient.delete(`/companies/${companyId}`),
 
+  // 🔥 Смена статуса компании (используется для верификации)
   updateStatus: (companyId: number, data: CompanyStatusUpdate) =>
     apiClient.patch<Company>(`/companies/${companyId}/status`, data),
 
-  requestScore: (data: CompanyScoreRequest) =>
-    apiClient.post<{ task_id: string }>('/companies/score', data),
+  // 🔥 Пересчёт скоринга ОДНОЙ компании (возвращает обновлённую компанию)
+  rescoreCompany: (companyId: number) =>
+    apiClient.post<Company>(`/companies/${companyId}/score`),
 
+  // 🔥 История скоринга
+  getScoreHistory: (companyId: number, params?: { limit?: number; offset?: number }) =>
+    apiClient.get<ScoreHistoryResponse>(`/companies/${companyId}/score-history`, { params }),
+
+  // 🔥 Bulk-верификация (через PATCH статуса для каждой)
   verify: (companyIds: number[]) =>
-    apiClient.post<{ task_id: string }>('/companies/verify', { company_ids: companyIds }),
+    Promise.all(
+      companyIds.map(id =>
+        apiClient.patch<Company>(`/companies/${id}/status`, { status: 'verified' })
+      )
+    ),
+
+  // 🔥 Bulk-скоринг (последовательно для каждой компании)
+  rescoreCompanies: (companyIds: number[]) =>
+    Promise.all(
+      companyIds.map(id =>
+        apiClient.post<Company>(`/companies/${id}/score`)
+      )
+    ),
 
   export: (filters?: CompanyFilters) =>
     apiClient.get<Blob>('/companies/export', { 
       params: filters,
       responseType: 'blob',
     }),
+  
+  create: (data: CompanyCreate) =>
+    apiClient.post<Company>('/companies', data),
+
+  // 🔥 Массовый импорт
+  import: (data: CompanyImportRequest) =>
+    apiClient.post<CompanyImportResponse>('/companies/import', data),
+
+  // 🔥 История запусков сбора данных
+  getIngestLogs: (params?: { source?: string; limit?: number; offset?: number }) =>
+    apiClient.get<IngestLogsResponse>('/companies/ingest-logs', { params }),
 }
 
 // ==================== COMPETENCIES ====================
