@@ -18,7 +18,7 @@ FORMAL_PROMPT = """\
 - Описание: {description}
 - Регион: {region}
 - Размер: {employee_count} сотрудников
-
+{memory_context}
 Требования:
 - Официальный деловой стиль
 - Конкретное предложение: стажировки, практики, дипломные проекты
@@ -35,7 +35,7 @@ INFORMAL_PROMPT = """\
 
 Контекст о компании: {description}
 Отрасль: {industry}, регион: {region}
-
+{memory_context}
 Стиль: без канцеляризмов, как от человека к человеку.
 Цель: предложить взять студентов на стажировку или дипломный проект.
 До 150 слов. Первая строка: "Тема: <тема письма>", затем пустая строка и текст.
@@ -61,13 +61,15 @@ def _parse_subject_body(text: str) -> tuple[str, str]:
 
 
 # TODO[MOCK]: удалить функцию целиком
-def _mock_generate(company, tone: str) -> tuple[str, str]:
+def _mock_generate(company, tone: str, memory_context: str = "") -> tuple[str, str]:
     subject = f"[MOCK] Предложение о сотрудничестве — {company.name}"
+    memory_note = f"\n\n[Учтена память агента]:\n{memory_context}" if memory_context else ""
     body = (
         f"Уважаемые коллеги из {company.name},\n\n"
         f"[MOCK_LLM=true — Ollama не вызывается]\n\n"
         f"Отрасль: {company.industry or 'IT'}, тон: {tone}.\n\n"
-        f"УрФУ предлагает сотрудничество в формате стажировок.\n\n"
+        f"УрФУ предлагает сотрудничество в формате стажировок."
+        f"{memory_note}\n\n"
         f"С уважением,\nОтдел по работе с работодателями УрФУ"
     )
     logger.info("MOCK_LLM: сгенерировано письмо для %s", company.name)
@@ -85,18 +87,27 @@ def _build_chain(tone: str):
     return ChatPromptTemplate.from_template(template) | llm | StrOutputParser()
 
 
-async def generate_email(company, tone: str = "formal") -> tuple[str, str]:
+async def generate_email(company, tone: str = "formal", memory_context: str = "") -> tuple[str, str]:
+    """
+    memory_context: текстовое резюме релевантных записей долгосрочной памяти
+    (см. MemoryService.retrieve_relevant + format_memories), подставляется в промпт,
+    чтобы агент учитывал прошлый опыт переписки с похожими компаниями (FR-6.3).
+    """
     # TODO[MOCK]: удалить if-блок, оставить только реальную генерацию
     if settings.MOCK_LLM:
-        return _mock_generate(company, tone)
+        return _mock_generate(company, tone, memory_context)
 
     chain = _build_chain(tone)
+    memory_block = (
+        f"\nУчти прошлый опыт агента (память):\n{memory_context}\n" if memory_context else "\n"
+    )
     params = {
         "name": company.name,
         "industry": company.industry or "IT",
         "description": (company.description or "")[:500],
         "region": company.region or "Екатеринбург",
         "employee_count": company.employee_count or "н/д",
+        "memory_context": memory_block,
     }
     try:
         raw = await asyncio.to_thread(chain.invoke, params)

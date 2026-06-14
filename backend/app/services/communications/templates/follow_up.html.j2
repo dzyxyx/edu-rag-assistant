@@ -1,0 +1,8 @@
+{% extends "base_email.html.j2" %}
+{# Follow-up письмо — наследует общую структуру, добавляет пометку "Повторное обращение". #}
+{% block greeting %}
+{% if company_name %}
+<p>Уважаемые коллеги из «{{ company_name }}»,</p>
+<p style="color: #888; font-size: 12px;">(повторное обращение{% if follow_up_number %} №{{ follow_up_number }}{% endif %})</p>
+{% endif %}
+{% endblock %}

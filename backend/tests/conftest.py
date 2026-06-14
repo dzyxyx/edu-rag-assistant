@@ -4,9 +4,22 @@ from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from app.core.config import settings
+from app.core.redis import get_redis
 from app.db.base import Base
 from app.db.session import get_db
 from app.main import app  # noqa: E402 — app.db.models уже загружены внутри main.py
+
+
+class _FakeRedis:
+    """Заглушка Redis для тестов — lifespan (init_redis) не запускается при
+    использовании ASGITransport без LifespanManager, поэтому app.core.redis
+    не инициализирован. Достаточно для health-check и каналов уведомлений."""
+
+    async def ping(self) -> bool:
+        return True
+
+    async def publish(self, *args, **kwargs) -> int:
+        return 0
 
 TEST_DATABASE_URL = (
     f"postgresql+asyncpg://{settings.POSTGRES_USER}:{settings.POSTGRES_PASSWORD}"
@@ -38,7 +51,11 @@ async def client(db_session):
     async def override_get_db():
         yield db_session
 
+    async def override_get_redis():
+        yield _FakeRedis()
+
     app.dependency_overrides[get_db] = override_get_db
+    app.dependency_overrides[get_redis] = override_get_redis
 
     async with AsyncClient(
         transport=ASGITransport(app=app),

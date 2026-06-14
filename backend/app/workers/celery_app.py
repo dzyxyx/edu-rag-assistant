@@ -11,6 +11,7 @@ celery_app = Celery(
         "app.workers.tasks.rag_ingest",
         "app.workers.tasks.outreach",
         "app.workers.tasks.nlp_process",
+        "app.workers.tasks.scoring",
     ],
 )
 
@@ -41,6 +42,11 @@ celery_app.conf.beat_schedule = {
     },
     "nlp-process-nightly": {
         "task": "app.workers.tasks.nlp_process.run_nlp_process",
+        "schedule": 60 * 60 * 24,
+        "options": {"queue": "default"},
+    },
+    "scoring-recompute-daily": {
+        "task": "app.workers.tasks.scoring.run_scoring_recompute",
         "schedule": 60 * 60 * 24,
         "options": {"queue": "default"},
     },

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models.priority_area import PriorityArea, PriorityAreaStatus
@@ -23,6 +23,13 @@ class PriorityAreaRepository:
         q = q.limit(limit)
         result = await self.session.execute(q)
         return list(result.scalars().all())
+
+    async def count(self, status: str | None = None) -> int:
+        q = select(func.count()).select_from(PriorityArea)
+        if status is not None:
+            q = q.where(PriorityArea.status == status)
+        result = await self.session.execute(q)
+        return result.scalar_one()
 
     async def get_by_name(self, name: str, industry: str | None) -> PriorityArea | None:
         result = await self.session.execute(

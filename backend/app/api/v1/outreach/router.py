@@ -9,13 +9,18 @@ from app.api.v1.outreach.schemas import (
     GenerateRequest, GenerateResponse,
 )
 from app.core.dependencies import get_current_user
+from app.db.models.notification import NotificationType
 from app.db.models.outreach import OutreachStatus
 from app.db.models.user import User
 from app.db.repositories.company import CompanyRepository
+from app.db.repositories.notification import NotificationRepository
 from app.db.repositories.outreach import OutreachRepository
 from app.db.session import get_db
-from app.services.outreach.generator import generate_email
+from app.services.memory.audit import log_action
+from app.services.memory.memory_service import MemoryService
+from app.services.outreach.memory_graph import run_outreach_graph
 from app.services.outreach.sender import send_email
+from app.services.outreach.touch_plan import next_touch_after_days
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -94,6 +99,8 @@ async def generate_drafts(
     generated = 0
     failed = 0
 
+    memory_service = MemoryService(db)
+
     for company_id in body.company_ids:
         company = await company_repo.get_by_id(company_id)
         if not company:
@@ -101,14 +108,57 @@ async def generate_drafts(
             failed += 1
             continue
         try:
-            subject, email_body = await generate_email(company, tone=body.tone)
-            await outreach_repo.create_event(
+            # FR-6.3: граф retrieve_memory -> generate_email -> score_confidence -> approve/escalate
+            result = await run_outreach_graph(db, company, tone=body.tone)
+
+            event = await outreach_repo.create_event(
                 campaign_id=campaign_id,
                 company_id=company_id,
-                subject=subject,
-                body=email_body,
+                subject=result["subject"],
+                body=result["body"],
                 tone=body.tone,
+                status=result["status"],
+                confidence_score=result["confidence"],
+                memory_used_count=len(result.get("memories", [])),
             )
+
+            await memory_service.save_memory(
+                memory_type="interaction",
+                phase="phase_3",
+                company_id=company_id,
+                content=f"Сгенерировано письмо для {company.name} (тон: {body.tone}).\n"
+                        f"Тема: {result['subject']}",
+                summary=f"Outreach draft для {company.name}, confidence={result['confidence']:.2f}",
+            )
+            await log_action(
+                db,
+                actor="agent",
+                action="outreach.draft_generated",
+                phase="phase_3",
+                entity_type="outreach_event",
+                entity_id=event.id,
+                details={
+                    "company_id": company_id,
+                    "confidence": result["confidence"],
+                    "status": str(result["status"]),
+                    "memory_used_count": len(result.get("memories", [])),
+                },
+                user_id=current_user.id,
+            )
+
+            if result["status"] == OutreachStatus.ESCALATED:
+                # Human-in-the-loop (Sprint 9, FR-4.6): низкая уверенность —
+                # уведомляем сотрудника о необходимости проверки письма.
+                notification_repo = NotificationRepository(db)
+                await notification_repo.create(
+                    type=NotificationType.OUTREACH_ESCALATED,
+                    title=f"Письмо для «{company.name}» требует проверки",
+                    message=f"Низкая уверенность агента (confidence={result['confidence']:.2f}).",
+                    entity_type="outreach_event",
+                    entity_id=event.id,
+                    recipient_role="менеджер по партнёрствам",
+                )
+
             generated += 1
         except Exception as exc:
             logger.exception("generate_drafts: failed for company %s: %s", company_id, exc)
@@ -196,6 +246,9 @@ async def send_event(
         body=event.body or "",
     )
     new_status = OutreachStatus.SENT if ok else OutreachStatus.DRAFT
-    event = await repo.update_status(event_id, new_status)
+    # FR-3.6: при успешной отправке планируем следующее касание (follow-up)
+    # согласно плану касаний (OUTREACH_TOUCH_PLAN_DAYS).
+    next_days = next_touch_after_days(event.follow_up_number) if ok else event.next_follow_up_after_days
+    event = await repo.update_status(event_id, new_status, next_follow_up_after_days=next_days)
     await db.commit()
     return event

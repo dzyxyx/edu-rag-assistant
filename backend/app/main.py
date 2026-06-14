@@ -2,10 +2,14 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from slowapi.errors import RateLimitExceeded
+from slowapi import _rate_limit_exceeded_handler
 
 from app.api.v1.router import api_router
 from app.core.config import settings
+from app.core.limiter import limiter
 from app.core.logging import setup_logging
+from app.core.observability import init_sentry, setup_metrics
 from app.core.redis import init_redis, close_redis
 import app.db.models  # noqa: F401 — регистрирует все модели в маппере SQLAlchemy
 
@@ -20,6 +24,8 @@ async def lifespan(app: FastAPI):
 
 
 def create_app() -> FastAPI:
+    init_sentry()
+
     app = FastAPI(
         title=settings.PROJECT_NAME,
         version=settings.VERSION,
@@ -36,7 +42,12 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
+    app.state.limiter = limiter
+    app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
     app.include_router(api_router, prefix=settings.API_V1_PREFIX)
+
+    setup_metrics(app)
 
     return app
 
