@@ -26,23 +26,18 @@
 cd frontend/rh-ai-agent
 npm install
 ```
-### 2. Переменные окружения
-```bash
-cp .env.example .env
-# Отредактируй .env под свои значения
-```
 
-### 3. Запуск в режиме разработки
+### 2. Запуск в режиме разработки
 ```bash
 npm run dev
 ```
 Приложение будет доступно по адресу: http://localhost:5173
 
-### 4. Сборка для production
+### 3. Сборка для production
 ```bash
 npm run build
 ```
-### 5. Предпросмотр production сборки
+### 4. Предпросмотр production сборки
 ```bash
 npm run preview
 ```
