@@ -28,7 +28,7 @@ npm install
 ```
 ### 2. Переменные окружения
 ```bash
-cp .env
+cp .env.example .env
 # Отредактируй .env под свои значения
 ```
 
