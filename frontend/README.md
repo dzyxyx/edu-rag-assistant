@@ -48,8 +48,6 @@ npm run preview
 | **npm run dev** | Запуск в режиме разработки |
 | **npm run build** | Сборка production версии |
 | **npm run preview** | Предпросмотр production сборки |
-| **npm run lint** | Проверка кода ESLint |
-| **npm run type-check** | Проверка типов TypeScript |
 
 ## Структура проекта
 ```
