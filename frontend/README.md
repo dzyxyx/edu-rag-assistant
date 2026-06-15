@@ -28,7 +28,7 @@ npm install
 ```
 ### 2. Переменные окружения
 ```bash
-cp .env.example .env
+cp .env
 # Отредактируй .env под свои значения
 ```
 
@@ -50,11 +50,7 @@ npm run preview
 ## Переменные окружения
 | Переменная | Описание |
 |------------|-----|
-| **VITE_API_BASE_URL** | Базовый URL API бэкенда |
-| **VITE_CHAT_BASE_URL** | URL для WebSocket чата |
-| **VITE_WS_CHAT_PATH** | Путь для WebSocket чата |
-| **VITE_APP_TITLE** | Заголовок приложения |
-| **VITE_APP_ENV** | Окружение (development/production) |
+| **VITE_API_URL** | Базовый URL API бэкенда |
 
 ## Доступные скрипты
 | Команда | Описание |
